@@ -1,7 +1,7 @@
 // src/main/java/com/example/TripSpring/dto/route/RouteStep.java
-package com.example.TripSpring.dto.route;
+package com.example.schedule_service.dto.route;
 
-import com.example.TripSpring.dto.domain.route.GeoPoint;
+import com.example.schedule_service.dto.domain.route.GeoPoint;
 import lombok.Builder;
 import lombok.Data;
 

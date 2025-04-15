@@ -1,6 +1,6 @@
-package com.example.TripSpring.dto.response.route;
+package com.example.schedule_service.dto.response.route;
 
-import com.example.TripSpring.dto.domain.route.GeoPoint;
+import com.example.schedule_service.dto.domain.route.GeoPoint;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

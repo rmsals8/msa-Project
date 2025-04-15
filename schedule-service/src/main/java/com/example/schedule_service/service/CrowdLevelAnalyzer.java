@@ -1,4 +1,4 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;

@@ -1,10 +1,10 @@
-package com.example.TripSpring.dto.response;
+package com.example.schedule_service.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;
 
-import com.example.TripSpring.dto.domain.RouteSegment;
+import com.example.schedule_service.dto.domain.RouteSegment;
 
 @Data
 @Builder

@@ -1,4 +1,4 @@
-package com.example.TripSpring.controller;
+package com.example.navigation_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,22 +8,22 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import com.example.TripSpring.dto.domain.route.TransportMode;
+import com.example.navigation_service.dto.domain.route.TransportMode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.example.TripSpring.dto.response.navigation.RouteSegment;
-import com.example.TripSpring.dto.response.navigation.RouteStep;
-import com.example.TripSpring.dto.request.StartNavigationRequest;
-import com.example.TripSpring.dto.request.LocationUpdate;
-import com.example.TripSpring.dto.response.NavigationStatus;
-import com.example.TripSpring.dto.response.navigation.RouteOptionsResponse;
-import com.example.TripSpring.dto.response.navigation.RouteDetail;
-import com.example.TripSpring.dto.response.navigation.RouteOptionSummary;
-import com.example.TripSpring.dto.response.navigation.TransportOption;
-import com.example.TripSpring.dto.response.navigation.TotalOptions;
-import com.example.TripSpring.service.NavigationService;
-import com.example.TripSpring.exception.NavigationException;
-import com.example.TripSpring.service.TmapService;
+import com.example.navigation_service.dto.response.navigation.RouteSegment;
+import com.example.navigation_service.dto.response.navigation.RouteStep;
+import com.example.navigation_service.dto.request.StartNavigationRequest;
+import com.example.navigation_service.dto.request.LocationUpdate;
+import com.example.navigation_service.dto.response.NavigationStatus;
+import com.example.navigation_service.dto.response.navigation.RouteOptionsResponse;
+import com.example.navigation_service.dto.response.navigation.RouteDetail;
+import com.example.navigation_service.dto.response.navigation.RouteOptionSummary;
+import com.example.navigation_service.dto.response.navigation.TransportOption;
+import com.example.navigation_service.dto.response.navigation.TotalOptions;
+import com.example.navigation_service.service.NavigationService;
+import com.example.navigation_service.exception.NavigationException;
+import com.example.navigation_service.service.TmapService;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/navigation")

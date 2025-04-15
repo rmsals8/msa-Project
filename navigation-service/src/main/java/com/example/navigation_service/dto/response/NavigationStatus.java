@@ -2,7 +2,7 @@ package com.example.navigation_service.dto.response;
 
 import java.util.List;
 
-import com.example.TripSpring.dto.domain.Location;
+import com.example.common.dto.domain.Location;
 
 import lombok.Builder;
 import lombok.Data;

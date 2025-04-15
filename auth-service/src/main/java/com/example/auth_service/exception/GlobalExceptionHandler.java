@@ -1,4 +1,4 @@
-package com.example.TripSpring.exception;
+package com.example.auth_service.exception;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import com.example.TripSpring.dto.response.ApiErrorResponse;
+import com.example.auth_service.dto.response.ApiErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

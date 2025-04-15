@@ -1,4 +1,4 @@
-package com.example.TripSpring.service;
+package com.example.place_service.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;

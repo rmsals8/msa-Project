@@ -1,4 +1,4 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
 import java.util.List;
 import java.util.Map;
@@ -7,8 +7,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import com.example.TripSpring.dto.domain.Location;
-import com.example.TripSpring.dto.domain.TrafficInfo;
+import com.example.schedule_service.dto.domain.Location;
+import com.example.schedule_service.dto.domain.TrafficInfo;
 import org.springframework.http.HttpMethod;
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,4 +1,4 @@
-package com.example.TripSpring.service;
+package com.example.place_service.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,9 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.example.TripSpring.domain.PlaceInfo;
-import com.example.TripSpring.dto.response.NearbyPlacesResponse;
-import com.example.TripSpring.exception.PlaceSearchException;
+import com.example.place_service.domain.PlaceInfo;
+import com.example.place_service.dto.response.NearbyPlacesResponse;
+import com.example.place_service.exception.PlaceSearchException;
 
 import java.util.*;
 

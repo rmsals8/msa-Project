@@ -1,11 +1,11 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
-import com.example.TripSpring.dto.Geometry;
-import com.example.TripSpring.dto.Place;
-import com.example.TripSpring.dto.domain.Location;
-import com.example.TripSpring.dto.domain.PlaceInfo;
-import com.example.TripSpring.dto.domain.Schedule;
-import com.example.TripSpring.dto.domain.TrafficInfo;
+import com.example.schedule_service.dto.Geometry;
+import com.example.schedule_service.dto.Place;
+import com.example.schedule_service.dto.domain.Location;
+import com.example.schedule_service.dto.domain.PlaceInfo;
+import com.example.schedule_service.dto.domain.Schedule;
+import com.example.schedule_service.dto.domain.TrafficInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

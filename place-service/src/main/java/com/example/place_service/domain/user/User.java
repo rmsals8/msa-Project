@@ -1,4 +1,4 @@
-package com.example.TripSpring.domain.user;
+package com.example.place_service.domain.user;
 import jakarta.persistence.*;
 import lombok.*;
 // import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
-import com.example.TripSpring.domain.auth.AuthProvider;
-import com.example.TripSpring.domain.auth.Role;
+import com.example.place_service.domain.auth.AuthProvider;
+import com.example.place_service.domain.auth.Role;
 
 // // Audit 기능 사용시 필요한 import
 // import org.springframework.data.annotation.CreatedDate;

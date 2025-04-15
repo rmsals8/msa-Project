@@ -1,4 +1,4 @@
-package com.example.TripSpring.exception;
+package com.example.schedule_service.exception;
 
 public class PlaceSearchException extends RuntimeException {
     public PlaceSearchException(String message) {

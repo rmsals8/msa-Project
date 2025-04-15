@@ -1,9 +1,9 @@
-package com.example.TripSpring.dto.response.route;
+package com.example.schedule_service.dto.response.route;
 
 import java.util.List;
 
-import com.example.TripSpring.dto.domain.route.GeoPoint;
-import com.example.TripSpring.dto.domain.route.TransportMode;
+import com.example.schedule_service.dto.domain.route.GeoPoint;
+import com.example.schedule_service.dto.domain.route.TransportMode;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

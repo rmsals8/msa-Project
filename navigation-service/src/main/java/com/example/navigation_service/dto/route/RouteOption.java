@@ -1,5 +1,5 @@
 //src/main/java/com/example/TripSpring/dto/route/RouteOption.java
-package com.example.TripSpring.dto.route;
+package com.example.navigation_service.dto.route;
 
 import lombok.Builder;
 import lombok.Data;

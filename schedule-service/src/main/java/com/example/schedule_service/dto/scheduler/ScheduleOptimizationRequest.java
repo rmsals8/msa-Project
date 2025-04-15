@@ -1,5 +1,5 @@
 // src/main/java/com/example/TripSpring/dto/scheduler/ScheduleOptimizationRequest.java
-package com.example.TripSpring.dto.scheduler;
+package com.example.schedule_service.dto.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.request.route;
+package com.example.schedule_service.dto.request.route;
 
 import lombok.Data;
 import java.util.List;

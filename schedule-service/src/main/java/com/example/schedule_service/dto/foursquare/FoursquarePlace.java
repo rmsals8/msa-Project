@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.foursquare;
+package com.example.schedule_service.dto.foursquare;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

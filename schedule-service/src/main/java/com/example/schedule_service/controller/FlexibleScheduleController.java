@@ -1,23 +1,23 @@
-package com.example.TripSpring.controller;
+package com.example.schedule_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
-import com.example.TripSpring.dto.domain.Location;
+import com.example.schedule_service.dto.domain.Location;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.TripSpring.dto.request.FlexibleScheduleRequest;
+import com.example.schedule_service.dto.request.FlexibleScheduleRequest;
 
-import com.example.TripSpring.dto.response.FlexibleScheduleResponse;
-import com.example.TripSpring.service.FlexibleScheduleService;
-import com.example.TripSpring.service.ScheduleOptimizationService;
-import com.example.TripSpring.dto.scheduler.OptimizeResponse;
-import com.example.TripSpring.dto.scheduler.ScheduleOptimizationRequest;
-import com.example.TripSpring.dto.domain.Schedule;
+import com.example.schedule_service.dto.response.FlexibleScheduleResponse;
+import com.example.schedule_service.service.FlexibleScheduleService;
+import com.example.schedule_service.service.ScheduleOptimizationService;
+import com.example.schedule_service.dto.scheduler.OptimizeResponse;
+import com.example.schedule_service.dto.scheduler.ScheduleOptimizationRequest;
+import com.example.schedule_service.dto.domain.Schedule;
 import java.util.List;
-import com.example.TripSpring.dto.domain.ScheduleType;
+import com.example.schedule_service.dto.domain.ScheduleType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j

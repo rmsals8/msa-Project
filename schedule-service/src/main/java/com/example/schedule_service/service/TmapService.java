@@ -23,7 +23,7 @@ import java.util.Map;
 public class TmapService {
     private final RestTemplate restTemplate;
 
-    @Value("${SK_API}")
+    @Value("${tmap.api.key}")
     private String apiKey;
     private final String baseUrl = "https://apis.openapi.sk.com";
 

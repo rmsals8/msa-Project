@@ -1,7 +1,7 @@
 //src/main/java/com/example/TripSpring/dto/navigation/NavigationResponse.java
-package com.example.TripSpring.dto.navigation;
+package com.example.schedule_service.dto.navigation;
 
-import com.example.TripSpring.dto.domain.Location;
+import com.example.schedule_service.dto.domain.Location;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;

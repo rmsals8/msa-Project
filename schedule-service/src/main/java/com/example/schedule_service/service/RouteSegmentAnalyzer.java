@@ -1,11 +1,11 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
-import com.example.TripSpring.dto.domain.route.GeoPoint;
-import com.example.TripSpring.dto.domain.route.TransportMode;
-import com.example.TripSpring.dto.request.route.RouteRecommendationRequest;
-import com.example.TripSpring.dto.request.route.RouteRecommendationRequest.OptimizedSchedule;
-import com.example.TripSpring.dto.response.route.RouteSegmentDetailResponse;
-import com.example.TripSpring.dto.response.route.NavigationPointResponse;
+import com.example.schedule_service.dto.domain.route.GeoPoint;
+import com.example.schedule_service.dto.domain.route.TransportMode;
+import com.example.schedule_service.dto.request.route.RouteRecommendationRequest;
+import com.example.schedule_service.dto.request.route.RouteRecommendationRequest.OptimizedSchedule;
+import com.example.schedule_service.dto.response.route.RouteSegmentDetailResponse;
+import com.example.schedule_service.dto.response.route.NavigationPointResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,19 +1,19 @@
 // src/main/java/com/example/TripSpring/service/SocialLoginService.java
 
-package com.example.TripSpring.service;
+package com.example.auth_service.service;
 
-import com.example.TripSpring.domain.auth.AuthProvider;
-import com.example.TripSpring.domain.auth.Role;
-import com.example.TripSpring.domain.user.User;
-import com.example.TripSpring.payload.oauth2.KakaoUserInfo;
-import com.example.TripSpring.payload.oauth2.NaverUserInfo;
-import com.example.TripSpring.payload.request.SocialLoginRequest;
-import com.example.TripSpring.payload.response.AuthResponse;
-import com.example.TripSpring.payload.response.UserProfile;
-import com.example.TripSpring.repository.UserRepository;
-import com.example.TripSpring.security.JwtTokenProvider;
-import com.example.TripSpring.service.oauth.KakaoOAuth2Service;
-import com.example.TripSpring.service.oauth.NaverOAuth2Service;
+import com.example.auth_service.domain.auth.AuthProvider;
+import com.example.auth_service.domain.auth.Role;
+import com.example.auth_service.domain.user.User;
+import com.example.auth_service.payload.oauth2.KakaoUserInfo;
+import com.example.auth_service.payload.oauth2.NaverUserInfo;
+import com.example.auth_service.payload.request.SocialLoginRequest;
+import com.example.auth_service.payload.response.AuthResponse;
+import com.example.auth_service.payload.response.UserProfile;
+import com.example.auth_service.repository.UserRepository;
+import com.example.auth_service.security.JwtTokenProvider;
+import com.example.auth_service.service.oauth.KakaoOAuth2Service;
+import com.example.auth_service.service.oauth.NaverOAuth2Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.domain;
+package com.example.schedule_service.dto.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
-import com.example.TripSpring.dto.domain.route.TransportMode;
+import com.example.schedule_service.dto.domain.route.TransportMode;
 
 @Data
 @Builder

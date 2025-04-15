@@ -1,13 +1,13 @@
-package com.example.TripSpring.controller;
+package com.example.schedule_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.TripSpring.dto.request.route.RouteRecommendationRequest;
-import com.example.TripSpring.dto.response.route.RouteRecommendationResponse;
-import com.example.TripSpring.service.RouteRecommendationService;
+import com.example.schedule_service.dto.request.route.RouteRecommendationRequest;
+import com.example.schedule_service.dto.response.route.RouteRecommendationResponse;
+import com.example.schedule_service.service.RouteRecommendationService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,9 +24,9 @@ public class RouteRecommendationController {
 
     @Operation(summary = "경로 추천 생성", description = "최적화된 일정을 기반으로 상세 경로를 추천합니다.")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "경로 추천 생성 성공"),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-        @ApiResponse(responseCode = "500", description = "서버 오류")
+            @ApiResponse(responseCode = "200", description = "경로 추천 생성 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping("/recommended-path")
     public ResponseEntity<RouteRecommendationResponse> getRouteRecommendation(
@@ -34,13 +34,12 @@ public class RouteRecommendationController {
         try {
             // 요청 로깅
             log.info("Received route recommendation request: {}", request);
-            
+
             // 기본 검증
             validateRequest(request);
 
-            RouteRecommendationResponse response = 
-                recommendationService.generateRouteRecommendation(request);
-            
+            RouteRecommendationResponse response = recommendationService.generateRouteRecommendation(request);
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             // 상세 로깅
@@ -48,11 +47,12 @@ public class RouteRecommendationController {
             throw new RuntimeException("Route recommendation failed: " + e.getMessage(), e);
         }
     }
+
     private void validateRequest(RouteRecommendationRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Route recommendation request cannot be null");
         }
-        
+
         if (request.getOptimizedSchedules() == null || request.getOptimizedSchedules().isEmpty()) {
             throw new IllegalArgumentException("Optimized schedules are required");
         }

@@ -1,5 +1,5 @@
 // src/main/java/com/example/TripSpring/dto/transport/TransitLine.java
-package com.example.TripSpring.dto.transport;
+package com.example.navigation_service.dto.transport;
 
 import lombok.Builder;
 import lombok.Data;

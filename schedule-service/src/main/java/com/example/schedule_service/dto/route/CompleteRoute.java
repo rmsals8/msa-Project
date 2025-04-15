@@ -1,12 +1,12 @@
 //src/main/java/com/example/TripSpring/dto/route/CompleteRoute.java
-package com.example.TripSpring.dto.route;
+package com.example.schedule_service.dto.route;
 
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;
 import java.util.Map;
 
-import com.example.TripSpring.dto.response.RouteOption;
+import com.example.schedule_service.dto.response.RouteOption;
 
 @Data
 @Builder

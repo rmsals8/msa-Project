@@ -1,5 +1,5 @@
 // src/main/java/com/example/TripSpring/dto/VisitHistoryDto.java
-package com.example.TripSpring.dto;
+package com.example.place_service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VisitHistoryDto {
-    
+
     private String placeName;
     private String placeId;
     private String category;

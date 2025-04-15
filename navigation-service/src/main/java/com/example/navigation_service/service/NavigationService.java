@@ -1,6 +1,6 @@
 package com.example.navigation_service.service;
 
-import com.example.navigation_service.dto.domain.Location;
+import com.example.common.dto.domain.Location;
 import com.example.navigation_service.dto.domain.NavigationSession;
 import com.example.navigation_service.dto.request.LocationUpdate;
 import com.example.navigation_service.dto.request.StartNavigationRequest;

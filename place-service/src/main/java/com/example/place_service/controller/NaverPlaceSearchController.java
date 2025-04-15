@@ -1,6 +1,6 @@
-package com.example.TripSpring.controller;
+package com.example.place_service.controller;
 
-import com.example.TripSpring.service.NaverPlaceSearchService;
+import com.example.place_service.service.NaverPlaceSearchService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.CrossOrigin;

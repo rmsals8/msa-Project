@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.request;
+package com.example.navigation_service.dto.request;
 
 import java.time.LocalDateTime;
 

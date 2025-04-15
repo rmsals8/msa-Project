@@ -1,7 +1,7 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
-import com.example.TripSpring.dto.domain.PlaceInfo;
-import com.example.TripSpring.provider.PlaceSearchProvider;
+import com.example.schedule_service.dto.domain.PlaceInfo;
+import com.example.schedule_service.provider.PlaceSearchProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

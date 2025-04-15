@@ -1,4 +1,4 @@
-package com.example.TripSpring.exception;
+package com.example.schedule_service.exception;
 
 /**
  * 경로 분석 중 발생하는 예외를 처리하기 위한 커스텀 예외 클래스

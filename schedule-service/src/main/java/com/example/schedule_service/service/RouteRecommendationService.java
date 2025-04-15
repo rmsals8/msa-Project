@@ -1,4 +1,4 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -6,14 +6,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.TripSpring.dto.domain.route.TransportMode;
-import com.example.TripSpring.dto.request.route.RouteRecommendationRequest;
-import com.example.TripSpring.dto.request.route.RouteRecommendationRequest.OptimizedSchedule;
-import com.example.TripSpring.dto.response.RouteAnalysisResponse;
-import com.example.TripSpring.dto.response.route.RoutePlaceDetailResponse;
-import com.example.TripSpring.dto.response.route.RouteRecommendationResponse;
-import com.example.TripSpring.dto.response.route.RouteSegmentDetailResponse;
-import com.example.TripSpring.exception.RouteAnalysisException;
+import com.example.schedule_service.dto.domain.route.TransportMode;
+import com.example.schedule_service.dto.request.route.RouteRecommendationRequest;
+import com.example.schedule_service.dto.request.route.RouteRecommendationRequest.OptimizedSchedule;
+import com.example.schedule_service.dto.response.RouteAnalysisResponse;
+import com.example.schedule_service.dto.response.route.RoutePlaceDetailResponse;
+import com.example.schedule_service.dto.response.route.RouteRecommendationResponse;
+import com.example.schedule_service.dto.response.route.RouteSegmentDetailResponse;
+import com.example.schedule_service.exception.RouteAnalysisException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;

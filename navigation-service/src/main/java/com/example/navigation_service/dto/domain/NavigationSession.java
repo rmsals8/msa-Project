@@ -1,13 +1,14 @@
-package com.example.TripSpring.dto.domain;
+package com.example.navigation_service.dto.domain;
 
+import com.example.common.dto.domain.Location;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import com.example.TripSpring.dto.request.LocationUpdate;
-import com.example.TripSpring.dto.request.StartNavigationRequest;
-import com.example.TripSpring.dto.response.NavigationStatus;
+import com.example.navigation_service.dto.request.LocationUpdate;
+import com.example.navigation_service.dto.request.StartNavigationRequest;
+import com.example.navigation_service.dto.response.NavigationStatus;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -30,21 +31,21 @@ public class NavigationSession {
     private List<String> upcomingInstructions;
     private LocalDateTime lastUpdate;
 
-    public NavigationSession(String navigationId, 
-                           List<StartNavigationRequest.RouteSelection> selectedRoutes, 
-                           StartNavigationRequest.Location initialLocation) {
-        this.navigationId = navigationId; 
+    public NavigationSession(String navigationId,
+            List<StartNavigationRequest.RouteSelection> selectedRoutes,
+            StartNavigationRequest.Location initialLocation) {
+        this.navigationId = navigationId;
         this.status = NavigationStatus.Status.STARTED;
         this.progress = 0.0;
         this.currentSegmentIndex = 0;
         this.lastUpdated = LocalDateTime.now();
         this.upcomingInstructions = new ArrayList<>();
-        
+
         this.segments = selectedRoutes.stream()
-            .map(this::createSegment)
-            .collect(Collectors.toList());
+                .map(this::createSegment)
+                .collect(Collectors.toList());
     }
-    
+
     public NavigationSession(String navigationId, Location currentLocation, Location destination) {
         this.navigationId = navigationId;
         this.currentLocation = currentLocation;
@@ -74,8 +75,7 @@ public class NavigationSession {
 
     public void updateCurrentLocation(LocationUpdate update) {
         this.currentLocation = new Location(update.getLatitude(), update.getLongitude());
-        this.lastUpdated = update.getTimestamp() != null ? 
-            update.getTimestamp() : LocalDateTime.now();
+        this.lastUpdated = update.getTimestamp() != null ? update.getTimestamp() : LocalDateTime.now();
     }
 
     public Location getDestination() {
@@ -98,8 +98,8 @@ public class NavigationSession {
         this.totalTime = totalTime;
         this.totalFare = totalFare;
         this.lastUpdated = LocalDateTime.now();
-        log.debug("Updated total info - distance: {}, time: {}, fare: {}", 
-            totalDistance, totalTime, totalFare);
+        log.debug("Updated total info - distance: {}, time: {}, fare: {}",
+                totalDistance, totalTime, totalFare);
     }
 
     public RouteSegment getCurrentSegment() {
@@ -136,9 +136,9 @@ public class NavigationSession {
             return new ArrayList<>();
         }
         return segments.stream()
-            .skip(currentSegmentIndex)
-            .map(RouteSegment::getEndLocation)
-            .collect(Collectors.toList());
+                .skip(currentSegmentIndex)
+                .map(RouteSegment::getEndLocation)
+                .collect(Collectors.toList());
     }
 
     private RouteSegment createSegment(StartNavigationRequest.RouteSelection selection) {
@@ -164,30 +164,28 @@ public class NavigationSession {
                 RouteSegment segment = new RouteSegment();
                 segment.setSegmentId(UUID.randomUUID().toString());
                 segment.setStartLocation(schedule.getLocation());
-                
+
                 if (newRoute.getSchedules().indexOf(schedule) < newRoute.getSchedules().size() - 1) {
                     segment.setEndLocation(newRoute.getSchedules().get(
-                        newRoute.getSchedules().indexOf(schedule) + 1).getLocation());
+                            newRoute.getSchedules().indexOf(schedule) + 1).getLocation());
                 } else if (destination != null) {
                     segment.setEndLocation(destination);
                 }
-                
+
                 segment.setDistance(newRoute.getTotalDistance() / newRoute.getSchedules().size());
                 segment.setEstimatedDuration((int) (newRoute.getTotalTime() / newRoute.getSchedules().size()));
                 segments.add(segment);
             }
         }
-        
+
         updateTotalInfo(
-            (int) newRoute.getTotalDistance(),
-            (int) newRoute.getTotalTime(),
-            (int) newRoute.getTotalCost()
-        );
-        
+                (int) newRoute.getTotalDistance(),
+                (int) newRoute.getTotalTime(),
+                (int) newRoute.getTotalCost());
+
         this.currentSegmentIndex = 0;
         this.progress = 0.0;
         this.lastUpdated = LocalDateTime.now();
     }
 
- 
 }

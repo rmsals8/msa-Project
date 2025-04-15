@@ -11,7 +11,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import com.example.navigation_service.dto.domain.Location;
+import com.example.common.dto.domain.Location;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -24,7 +24,7 @@ public class TmapService {
     private final RestTemplate restTemplate;
 
     @Value("${tmap.api.key}")
-    private final String apiKey;
+    private String apiKey;
 
     private final String baseUrl = "https://apis.openapi.sk.com";
 

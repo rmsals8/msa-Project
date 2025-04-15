@@ -1,4 +1,4 @@
-package com.example.TripSpring.exception;
+package com.example.schedule_service.exception;
 
 public class OptimizationException extends RuntimeException {
     public OptimizationException(String message) {

@@ -1,9 +1,9 @@
 //src/main/java/com/example/TripSpring/controller/RealTimeNavigationController.java
-package com.example.TripSpring.controller;
+package com.example.navigation_service.controller;
 
-import com.example.TripSpring.dto.navigation.NavigationUpdate;
-import com.example.TripSpring.dto.navigation.NavigationResponse;
-import com.example.TripSpring.service.navigation.RealTimeNavigationService;
+import com.example.navigation_service.dto.navigation.NavigationUpdate;
+import com.example.navigation_service.dto.navigation.NavigationResponse;
+import com.example.navigation_service.service.navigation.RealTimeNavigationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -27,15 +27,14 @@ public class RealTimeNavigationController {
 
     @MessageMapping("/navigation.update")
     public void updateLocation(NavigationUpdate update) {
-        log.info("Received location update for navigation {}: {}", 
-            update.getNavigationId(), update);
-        
+        log.info("Received location update for navigation {}: {}",
+                update.getNavigationId(), update);
+
         NavigationResponse response = navigationService.processUpdate(update);
-        
+
         // 개별 세션에 대한 응답 전송
         messagingTemplate.convertAndSend(
-            "/topic/navigation/" + update.getNavigationId(), 
-            response
-        );
+                "/topic/navigation/" + update.getNavigationId(),
+                response);
     }
 }

@@ -1,6 +1,6 @@
-package com.example.TripSpring.dto.response;
+package com.example.place_service.dto.response;
 
-import com.example.TripSpring.domain.PlaceInfo;
+import com.example.place_service.domain.PlaceInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,14 +16,14 @@ public class NearbyPlacesResponse {
     private int count;
     private String status = "SUCCESS";
     private String message; // 이미 message 필드가 있는지 확인
-    
+
     // 기존 생성자
     public NearbyPlacesResponse(List<PlaceInfo> places) {
         this.places = places;
         this.count = places.size();
         this.status = "SUCCESS";
     }
-    
+
     // 기존에 없다면 이 메서드만 추가
     public void setNoResults() {
         this.places = new ArrayList<>();

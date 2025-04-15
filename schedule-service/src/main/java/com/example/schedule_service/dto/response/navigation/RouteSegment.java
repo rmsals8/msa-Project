@@ -1,5 +1,5 @@
 // RouteSegment.java
-package com.example.TripSpring.dto.response.navigation;
+package com.example.schedule_service.dto.response.navigation;
 
 import lombok.Builder;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package com.example.TripSpring.domain.auth;
+package com.example.place_service.domain.auth;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

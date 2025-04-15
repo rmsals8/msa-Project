@@ -1,7 +1,7 @@
-package com.example.TripSpring.dto.request;
+package com.example.schedule_service.dto.request;
 
-import com.example.TripSpring.domain.Schedule;
-import com.example.TripSpring.dto.domain.FlexiblePlaceOption;
+import com.example.schedule_service.domain.Schedule;
+import com.example.schedule_service.dto.domain.FlexiblePlaceOption;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

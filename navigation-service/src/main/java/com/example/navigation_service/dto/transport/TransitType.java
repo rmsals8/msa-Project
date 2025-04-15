@@ -1,5 +1,5 @@
 // src/main/java/com/example/TripSpring/dto/transport/TransitType.java
-package com.example.TripSpring.dto.transport;
+package com.example.navigation_service.dto.transport;
 
 public enum TransitType {
     BUS_STOP("버스정류장"),

@@ -1,6 +1,6 @@
 // src/main/java/com/example/TripSpring/dto/route/RouteDetails.java
-package com.example.TripSpring.dto.route;
-import com.example.TripSpring.dto.transport.TransitPoint;
+package com.example.navigation_service.dto.route;
+import com.example.navigation_service.dto.transport.TransitPoint;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;

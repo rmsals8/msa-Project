@@ -1,8 +1,8 @@
 //src/main/java/com/example/TripSpring/service/traffic/RealTimeTrafficService.java
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
-import com.example.TripSpring.dto.domain.Location;
-import com.example.TripSpring.dto.traffic.TrafficStatus;
+import com.example.schedule_service.dto.domain.Location;
+import com.example.schedule_service.dto.traffic.TrafficStatus;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

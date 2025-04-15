@@ -1,9 +1,9 @@
-package com.example.TripSpring.dto.response.route;
+package com.example.schedule_service.dto.response.route;
 
 import java.time.LocalTime;
 import java.util.List;
 
-import com.example.TripSpring.dto.domain.route.CrowdLevel;
+import com.example.schedule_service.dto.domain.route.CrowdLevel;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

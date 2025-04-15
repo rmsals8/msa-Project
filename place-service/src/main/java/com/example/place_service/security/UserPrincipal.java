@@ -1,7 +1,7 @@
-package com.example.TripSpring.security;
+package com.example.place_service.security;
 
-import com.example.TripSpring.domain.user.User;
-import com.example.TripSpring.domain.auth.AuthProvider;
+import com.example.place_service.domain.user.User;
+import com.example.place_service.domain.auth.AuthProvider;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -29,19 +29,17 @@ public class UserPrincipal implements UserDetails {
 
     public static UserPrincipal create(User user) {
         List<GrantedAuthority> authorities = Collections.singletonList(
-            new SimpleGrantedAuthority(user.getRole().getKey())
-        );
+                new SimpleGrantedAuthority(user.getRole().getKey()));
 
         return new UserPrincipal(
-            user.getId(),
-            user.getEmail(),
-            user.getPassword(),
-            user.getName(),
-            user.getPhoneNumber(),
-            user.getProvider(),
-            authorities,
-            null
-        );
+                user.getId(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getName(),
+                user.getPhoneNumber(),
+                user.getProvider(),
+                authorities,
+                null);
     }
 
     public static UserPrincipal create(User user, Map<String, Object> attributes) {

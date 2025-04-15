@@ -1,19 +1,19 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import com.example.TripSpring.dto.domain.FlexiblePlaceOption;
-import com.example.TripSpring.domain.PlaceInfo;
-import com.example.TripSpring.domain.Schedule;
-import com.example.TripSpring.domain.TimeWindow;
-import com.example.TripSpring.dto.response.FlexibleScheduleResponse;
-import com.example.TripSpring.dto.response.FlexibleScheduleResponse.RouteOption;
-import com.example.TripSpring.dto.response.FlexibleScheduleResponse.ScheduleItem;
-import com.example.TripSpring.dto.response.FlexibleScheduleResponse.RouteSegment;
-import com.example.TripSpring.dto.response.NearbyPlacesResponse;
-import com.example.TripSpring.exception.OptimizationException;
+import com.example.schedule_service.dto.domain.FlexiblePlaceOption;
+import com.example.schedule_service.domain.PlaceInfo;
+import com.example.schedule_service.domain.Schedule;
+import com.example.schedule_service.domain.TimeWindow;
+import com.example.schedule_service.dto.response.FlexibleScheduleResponse;
+import com.example.schedule_service.dto.response.FlexibleScheduleResponse.RouteOption;
+import com.example.schedule_service.dto.response.FlexibleScheduleResponse.ScheduleItem;
+import com.example.schedule_service.dto.response.FlexibleScheduleResponse.RouteSegment;
+import com.example.schedule_service.dto.response.NearbyPlacesResponse;
+import com.example.schedule_service.exception.OptimizationException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

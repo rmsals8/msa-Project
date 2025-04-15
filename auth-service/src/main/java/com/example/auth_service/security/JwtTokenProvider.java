@@ -1,4 +1,4 @@
-package com.example.TripSpring.security;
+package com.example.auth_service.security;
 
 import io.jsonwebtoken.*;
 import jakarta.annotation.PostConstruct;

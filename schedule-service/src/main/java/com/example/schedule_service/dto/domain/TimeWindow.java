@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.domain;
+package com.example.schedule_service.dto.domain;
 
 import lombok.Getter;
 import lombok.Setter;

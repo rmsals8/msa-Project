@@ -1,14 +1,14 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import com.example.TripSpring.dto.request.route.RouteRecommendationRequest.OptimizedSchedule;
-import com.example.TripSpring.dto.response.RouteAnalysisResponse;
-import com.example.TripSpring.dto.domain.TrafficInfo;
-import com.example.TripSpring.dto.domain.Location;
-import com.example.TripSpring.dto.domain.route.TransportMode;
+import com.example.schedule_service.dto.request.route.RouteRecommendationRequest.OptimizedSchedule;
+import com.example.schedule_service.dto.response.RouteAnalysisResponse;
+import com.example.schedule_service.dto.domain.TrafficInfo;
+import com.example.schedule_service.dto.domain.Location;
+import com.example.schedule_service.dto.domain.route.TransportMode;
 
 import java.time.LocalDateTime;
 import java.util.*;

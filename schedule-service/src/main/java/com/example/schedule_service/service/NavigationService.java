@@ -1,10 +1,10 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
-import com.example.TripSpring.dto.domain.Location;
-import com.example.TripSpring.dto.domain.NavigationSession;
-import com.example.TripSpring.dto.request.LocationUpdate;
-import com.example.TripSpring.dto.request.StartNavigationRequest;
-import com.example.TripSpring.dto.response.NavigationStatus;
+import com.example.schedule_service.dto.domain.Location;
+import com.example.schedule_service.dto.domain.NavigationSession;
+import com.example.schedule_service.dto.request.LocationUpdate;
+import com.example.schedule_service.dto.request.StartNavigationRequest;
+import com.example.schedule_service.dto.response.NavigationStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

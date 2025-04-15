@@ -1,4 +1,4 @@
-package com.example.TripSpring.domain;
+package com.example.schedule_service.domain;
 
 public enum ScheduleType {
     FIXED,

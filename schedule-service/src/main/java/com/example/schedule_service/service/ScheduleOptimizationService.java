@@ -1,14 +1,14 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
-import com.example.TripSpring.dto.domain.Schedule;
-import com.example.TripSpring.dto.domain.TrafficInfo;
-import com.example.TripSpring.dto.scheduler.OptimizeResponse;
+import com.example.schedule_service.dto.domain.Schedule;
+import com.example.schedule_service.dto.domain.TrafficInfo;
+import com.example.schedule_service.dto.scheduler.OptimizeResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.example.TripSpring.dto.Place;
-import com.example.TripSpring.dto.domain.Location;
+import com.example.schedule_service.dto.Place;
+import com.example.schedule_service.dto.domain.Location;
 import java.time.LocalDateTime;
 import java.time.Duration;
 import java.util.*;

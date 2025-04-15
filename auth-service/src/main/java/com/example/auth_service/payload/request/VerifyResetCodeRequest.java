@@ -1,5 +1,5 @@
 // VerifyResetCodeRequest.java
-package com.example.TripSpring.payload.request;
+package com.example.auth_service.payload.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

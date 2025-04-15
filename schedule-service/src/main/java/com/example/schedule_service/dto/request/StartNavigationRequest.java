@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.request;
+package com.example.schedule_service.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
-import com.example.TripSpring.dto.domain.RoutePreferences;
-import com.example.TripSpring.dto.domain.route.TransportMode;
+import com.example.schedule_service.dto.domain.RoutePreferences;
+import com.example.schedule_service.dto.domain.route.TransportMode;
 
 @Data
 @Builder

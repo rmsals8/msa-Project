@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.response.route;
+package com.example.schedule_service.dto.response.route;
 
 
 import lombok.AllArgsConstructor;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-import com.example.TripSpring.dto.response.RouteAnalysisResponse;
+import com.example.schedule_service.dto.response.RouteAnalysisResponse;
 
 @Data
 @NoArgsConstructor

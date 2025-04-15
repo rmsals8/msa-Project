@@ -1,7 +1,7 @@
 // src/main/java/com/example/TripSpring/dto/transport/TransitPoint.java
-package com.example.TripSpring.dto.transport;
+package com.example.navigation_service.dto.transport;
 
-import com.example.TripSpring.dto.domain.route.GeoPoint;
+import com.example.navigation_service.dto.domain.route.GeoPoint;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;

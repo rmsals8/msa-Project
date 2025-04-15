@@ -1,6 +1,6 @@
-package com.example.TripSpring.dto.response;
+package com.example.schedule_service.dto.response;
 
-import com.example.TripSpring.dto.domain.Schedule;
+import com.example.schedule_service.dto.domain.Schedule;
 
 import lombok.Data;
 @Data

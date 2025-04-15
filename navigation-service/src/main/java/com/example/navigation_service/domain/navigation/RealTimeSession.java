@@ -1,10 +1,10 @@
 //src/main/java/com/example/TripSpring/domain/navigation/RealTimeSession.java
-package com.example.TripSpring.domain.navigation;
+package com.example.navigation_service.domain.navigation;
 
-import com.example.TripSpring.dto.domain.Location;
-import com.example.TripSpring.dto.route.RouteDetails;
-import com.example.TripSpring.dto.domain.route.TransportMode;
-import com.example.TripSpring.dto.navigation.NavigationResponse;
+import com.example.common.dto.domain.Location;
+import com.example.navigation_service.dto.route.RouteDetails;
+import com.example.navigation_service.dto.domain.route.TransportMode;
+import com.example.navigation_service.dto.navigation.NavigationResponse;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,8 +25,8 @@ public class RealTimeSession {
     private TransportMode currentTransportMode;
     private LocalDateTime lastUpdate;
     private RouteDetails currentRoute;
-    private int remainingDistance;  // meters
-    private int remainingTime;      // seconds
+    private int remainingDistance; // meters
+    private int remainingTime; // seconds
     private double currentCongestion;
     private String currentInstruction;
     private List<String> upcomingInstructions;
@@ -57,10 +57,10 @@ public class RealTimeSession {
         if (currentRoute != null) {
             // 남은 거리 계산
             this.remainingDistance = calculateRemainingDistance();
-            
+
             // 남은 시간 계산
             this.remainingTime = calculateRemainingTime();
-            
+
             // 다음 경유지 업데이트
             updateNextWaypoint();
         }
@@ -97,10 +97,10 @@ public class RealTimeSession {
         upcomingInstructions.clear();
         if (currentRoute != null && currentRoute.getSegments() != null) {
             currentRoute.getSegments().forEach(segment -> {
-                String instruction = String.format("%s에서 %s 방향으로 %s", 
-                    segment.getStartLocationName(),
-                    segment.getEndLocationName(),
-                    getDirectionInstruction(segment.getMode()));
+                String instruction = String.format("%s에서 %s 방향으로 %s",
+                        segment.getStartLocationName(),
+                        segment.getEndLocationName(),
+                        getDirectionInstruction(segment.getMode()));
                 upcomingInstructions.add(instruction);
             });
         }
@@ -116,10 +116,10 @@ public class RealTimeSession {
         double dLat = lat2 - lat1;
         double dLon = lon2 - lon1;
 
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                   Math.cos(lat1) * Math.cos(lat2) *
-                   Math.sin(dLon/2) * Math.sin(dLon/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return R * c;
     }
@@ -127,10 +127,10 @@ public class RealTimeSession {
     private double getAverageSpeed(TransportMode mode) {
         // 평균 속도 (미터/초)
         return switch (mode) {
-            case WALK -> 1.4;     // 5 km/h
-            case BUS -> 8.3;      // 30 km/h
-            case SUBWAY -> 11.1;  // 40 km/h
-            case TAXI -> 11.1;    // 40 km/h
+            case WALK -> 1.4; // 5 km/h
+            case BUS -> 8.3; // 30 km/h
+            case SUBWAY -> 11.1; // 40 km/h
+            case TAXI -> 11.1; // 40 km/h
         };
     }
 
@@ -151,19 +151,19 @@ public class RealTimeSession {
         // 현재 진행 중인 세그먼트의 예상 위치 반환
         var currentSegment = currentRoute.getSegments().get(0);
         return new Location(
-            currentSegment.getEndLocation().getLatitude(),
-            currentSegment.getEndLocation().getLongitude()
-        );
+                currentSegment.getEndLocation().getLatitude(),
+                currentSegment.getEndLocation().getLongitude());
     }
+
     public void updateRoute(Map<String, Object> routeInfo) {
         try {
             // Map에서 필요한 정보 추출
-            Map<String, Object> properties = (Map<String, Object>) 
-                ((List<Map<String, Object>>) routeInfo.get("features")).get(0).get("properties");
-            
+            Map<String, Object> properties = (Map<String, Object>) ((List<Map<String, Object>>) routeInfo
+                    .get("features")).get(0).get("properties");
+
             this.remainingDistance = ((Number) properties.getOrDefault("totalDistance", 0)).intValue();
             this.remainingTime = ((Number) properties.getOrDefault("totalTime", 0)).intValue();
-            
+
             // 안내 메시지 업데이트
             updateInstructions(routeInfo);
         } catch (Exception e) {
@@ -174,14 +174,14 @@ public class RealTimeSession {
     private void updateInstructions(Map<String, Object> routeInfo) {
         List<String> instructions = new ArrayList<>();
         List<Map<String, Object>> features = (List<Map<String, Object>>) routeInfo.get("features");
-        
+
         for (Map<String, Object> feature : features) {
             Map<String, Object> properties = (Map<String, Object>) feature.get("properties");
             if (properties != null && properties.containsKey("description")) {
                 instructions.add((String) properties.get("description"));
             }
         }
-        
+
         this.upcomingInstructions = instructions;
     }
 }

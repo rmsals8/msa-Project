@@ -1,13 +1,13 @@
-package com.example.TripSpring.service;
+package com.example.schedule_service.service;
 
-import com.example.TripSpring.dto.request.route.RouteRecommendationRequest.OptimizedSchedule;
-import com.example.TripSpring.dto.response.route.FacilityResponse;
-import com.example.TripSpring.dto.response.route.RoutePlaceDetailResponse;
-import com.example.TripSpring.dto.domain.route.CrowdLevel;
-import com.example.TripSpring.dto.domain.route.GeoPoint;
-import com.example.TripSpring.dto.foursquare.FoursquarePlace;
-import com.example.TripSpring.dto.foursquare.FoursquarePlaceDetails;
-import com.example.TripSpring.dto.foursquare.FoursquareResponse;
+import com.example.schedule_service.dto.request.route.RouteRecommendationRequest.OptimizedSchedule;
+import com.example.schedule_service.dto.response.route.FacilityResponse;
+import com.example.schedule_service.dto.response.route.RoutePlaceDetailResponse;
+import com.example.schedule_service.dto.domain.route.CrowdLevel;
+import com.example.schedule_service.dto.domain.route.GeoPoint;
+import com.example.schedule_service.dto.foursquare.FoursquarePlace;
+import com.example.schedule_service.dto.foursquare.FoursquarePlaceDetails;
+import com.example.schedule_service.dto.foursquare.FoursquareResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

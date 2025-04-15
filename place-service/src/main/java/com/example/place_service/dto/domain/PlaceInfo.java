@@ -1,13 +1,13 @@
-package com.example.TripSpring.dto.domain;
+package com.example.place_service.dto.domain;
 
 import java.time.LocalTime;
-
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter
+@Setter
 @AllArgsConstructor
 public class PlaceInfo {
    private String id;

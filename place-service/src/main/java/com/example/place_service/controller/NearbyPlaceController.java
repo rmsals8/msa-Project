@@ -1,12 +1,12 @@
-package com.example.TripSpring.controller;
+package com.example.place_service.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.TripSpring.service.NearbyPlaceService;
-import com.example.TripSpring.dto.response.NearbyPlacesResponse;
+import com.example.place_service.service.NearbyPlaceService;
+import com.example.place_service.dto.response.NearbyPlacesResponse;
 
 @Slf4j
 @RestController

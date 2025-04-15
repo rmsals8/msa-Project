@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.response.navigation;
+package com.example.navigation_service.dto.response.navigation;
 
 import lombok.Builder;
 import lombok.Data;

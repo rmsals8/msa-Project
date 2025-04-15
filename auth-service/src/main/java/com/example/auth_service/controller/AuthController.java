@@ -1,6 +1,6 @@
-package com.example.TripSpring.controller;
+package com.example.auth_service.controller;
 
-import com.example.TripSpring.service.SocialLoginService;
+import com.example.auth_service.service.SocialLoginService;
 
 import org.springframework.http.ResponseEntity;
 
@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.TripSpring.payload.request.LoginRequest;
-import com.example.TripSpring.payload.request.SignupRequest;
-import com.example.TripSpring.payload.request.SocialLoginRequest;
-import com.example.TripSpring.payload.request.TokenRefreshRequest;
-import com.example.TripSpring.payload.response.AuthResponse;
+import com.example.auth_service.payload.request.LoginRequest;
+import com.example.auth_service.payload.request.SignupRequest;
+import com.example.auth_service.payload.request.SocialLoginRequest;
+import com.example.auth_service.payload.request.TokenRefreshRequest;
+import com.example.auth_service.payload.response.AuthResponse;
 
-import com.example.TripSpring.service.AuthService;
+import com.example.auth_service.service.AuthService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

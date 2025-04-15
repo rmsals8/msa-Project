@@ -1,10 +1,10 @@
-package com.example.TripSpring.service.oauth;
+package com.example.auth_service.service.oauth;
 
-import com.example.TripSpring.domain.auth.AuthProvider;
-import com.example.TripSpring.domain.auth.Role;
-import com.example.TripSpring.domain.user.User;
-import com.example.TripSpring.payload.oauth2.KakaoUserInfo;
-import com.example.TripSpring.repository.UserRepository;
+import com.example.auth_service.domain.auth.AuthProvider;
+import com.example.auth_service.domain.auth.Role;
+import com.example.auth_service.domain.user.User;
+import com.example.auth_service.payload.oauth2.KakaoUserInfo;
+import com.example.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;

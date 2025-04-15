@@ -1,6 +1,6 @@
-package com.example.TripSpring.dto.response;
+package com.example.schedule_service.dto.response;
 
-import com.example.TripSpring.domain.PlaceInfo;
+import com.example.schedule_service.domain.PlaceInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

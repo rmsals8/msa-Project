@@ -1,4 +1,4 @@
-package com.example.TripSpring.controller;
+package com.example.auth_service.controller;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.TripSpring.domain.user.User;
-import com.example.TripSpring.security.JwtTokenProvider;
-import com.example.TripSpring.service.oauth.KakaoOAuth2Service;
-import com.example.TripSpring.service.oauth.NaverOAuth2Service;
+import com.example.auth_service.domain.user.User;
+import com.example.auth_service.security.JwtTokenProvider;
+import com.example.auth_service.service.oauth.KakaoOAuth2Service;
+import com.example.auth_service.service.oauth.NaverOAuth2Service;
 
 @RestController
 @RequestMapping("/api/oauth2/callback")

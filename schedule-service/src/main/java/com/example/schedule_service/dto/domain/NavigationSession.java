@@ -1,13 +1,13 @@
-package com.example.TripSpring.dto.domain;
+package com.example.schedule_service.dto.domain;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import com.example.TripSpring.dto.request.LocationUpdate;
-import com.example.TripSpring.dto.request.StartNavigationRequest;
-import com.example.TripSpring.dto.response.NavigationStatus;
+import com.example.schedule_service.dto.request.LocationUpdate;
+import com.example.schedule_service.dto.request.StartNavigationRequest;
+import com.example.schedule_service.dto.response.NavigationStatus;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

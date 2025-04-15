@@ -1,11 +1,11 @@
-package com.example.TripSpring.dto.domain;
+package com.example.schedule_service.dto.domain;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.example.TripSpring.dto.domain.route.NavigationPoint;
-import com.example.TripSpring.dto.domain.route.TransportMode;
+import com.example.schedule_service.dto.domain.route.NavigationPoint;
+import com.example.schedule_service.dto.domain.route.TransportMode;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

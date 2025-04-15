@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.response.route;
+package com.example.schedule_service.dto.response.route;
 
 import java.util.Map;
 

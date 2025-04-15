@@ -1,10 +1,10 @@
 //src/main/java/com/example/TripSpring/service/notification/NavigationNotificationService.java
-package com.example.TripSpring.service.notification;
+package com.example.navigation_service.service.notification;
 
-import com.example.TripSpring.dto.navigation.NavigationResponse.NavigationAlert;
-import com.example.TripSpring.dto.navigation.NavigationResponse;
-import com.example.TripSpring.dto.traffic.TrafficStatus;
-import com.example.TripSpring.domain.navigation.RealTimeSession;
+import com.example.navigation_service.dto.navigation.NavigationResponse.NavigationAlert;
+import com.example.navigation_service.dto.navigation.NavigationResponse;
+import com.example.navigation_service.dto.traffic.TrafficStatus;
+import com.example.navigation_service.domain.navigation.RealTimeSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

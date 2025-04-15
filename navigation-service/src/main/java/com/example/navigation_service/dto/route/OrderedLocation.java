@@ -1,13 +1,13 @@
 //src/main/java/com/example/TripSpring/dto/route/OrderedLocation.java
-package com.example.TripSpring.dto.route;
+package com.example.navigation_service.dto.route;
 
-import com.example.TripSpring.dto.domain.Location;
+import com.example.common.dto.domain.Location;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@Builder 
+@Builder
 public class OrderedLocation {
     private int sequence;
     private Location location;
@@ -15,6 +15,6 @@ public class OrderedLocation {
     private String description;
     private LocalDateTime estimatedArrival;
     private LocalDateTime estimatedDeparture;
-    private int stayDuration;  // 체류 시간(분)
-    private boolean isRequired;  // 필수 경유지 여부
+    private int stayDuration; // 체류 시간(분)
+    private boolean isRequired; // 필수 경유지 여부
 }

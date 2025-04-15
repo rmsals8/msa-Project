@@ -1,6 +1,6 @@
-package com.example.TripSpring.security.oauth2;
+package com.example.auth_service.security.oauth2;
 
-import com.example.TripSpring.security.JwtTokenProvider;
+import com.example.auth_service.security.JwtTokenProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,10 +22,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     @Override
     public void onAuthenticationSuccess(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        Authentication authentication
-    ) throws IOException, ServletException {
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Authentication authentication) throws IOException, ServletException {
         String targetUrl = determineTargetUrl(request, response, authentication);
 
         if (response.isCommitted()) {
@@ -38,23 +37,21 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     }
 
     protected String determineTargetUrl(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        Authentication authentication
-    ) {
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Authentication authentication) {
         String token = tokenProvider.createToken(authentication);
         String refreshToken = tokenProvider.createRefreshToken(authentication.getName());
 
         return UriComponentsBuilder.fromUriString(REDIRECT_URI)
-            .queryParam("token", token)
-            .queryParam("refreshToken", refreshToken)
-            .build().toUriString();
+                .queryParam("token", token)
+                .queryParam("refreshToken", refreshToken)
+                .build().toUriString();
     }
 
     protected void clearAuthenticationAttributes(
-        HttpServletRequest request,
-        HttpServletResponse response
-    ) {
+            HttpServletRequest request,
+            HttpServletResponse response) {
         super.clearAuthenticationAttributes(request);
     }
 }

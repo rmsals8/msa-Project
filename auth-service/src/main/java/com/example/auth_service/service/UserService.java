@@ -1,7 +1,7 @@
-package com.example.TripSpring.service;
+package com.example.auth_service.service;
 
-import com.example.TripSpring.domain.user.User;
-import com.example.TripSpring.repository.UserRepository;
+import com.example.auth_service.domain.user.User;
+import com.example.auth_service.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

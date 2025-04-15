@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.domain;
+package com.example.navigation_service.dto.domain;
 
 import java.util.Arrays;
 import java.util.List;

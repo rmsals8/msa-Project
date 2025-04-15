@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.response;
+package com.example.schedule_service.dto.response;
 import java.util.List;
 
 import lombok.Getter;

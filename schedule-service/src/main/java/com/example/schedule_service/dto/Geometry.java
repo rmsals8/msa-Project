@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto;
+package com.example.schedule_service.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

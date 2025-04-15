@@ -1,4 +1,4 @@
-package com.example.TripSpring.domain.auth;
+package com.example.auth_service.domain.auth;
 
 public enum AuthProvider {
     LOCAL,    // 일반 이메일/비밀번호 회원가입

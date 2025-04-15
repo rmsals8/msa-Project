@@ -1,4 +1,4 @@
-package com.example.TripSpring.domain;
+package com.example.schedule_service.domain;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

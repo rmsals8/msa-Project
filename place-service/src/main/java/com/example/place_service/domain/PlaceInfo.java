@@ -1,4 +1,4 @@
-package com.example.TripSpring.domain;
+package com.example.place_service.domain;
 
 import lombok.Builder;
 import lombok.Data;

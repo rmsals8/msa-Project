@@ -1,6 +1,6 @@
 // src/main/java/com/example/TripSpring/payload/request/SocialLoginRequest.java
 
-package com.example.TripSpring.payload.request;
+package com.example.auth_service.payload.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

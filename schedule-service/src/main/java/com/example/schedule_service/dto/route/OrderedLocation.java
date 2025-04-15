@@ -1,7 +1,7 @@
 //src/main/java/com/example/TripSpring/dto/route/OrderedLocation.java
-package com.example.TripSpring.dto.route;
+package com.example.schedule_service.dto.route;
 
-import com.example.TripSpring.dto.domain.Location;
+import com.example.schedule_service.dto.domain.Location;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-package com.example.TripSpring.payload.response;
+package com.example.auth_service.payload.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

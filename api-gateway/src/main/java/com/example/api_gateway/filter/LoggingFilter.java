@@ -1,4 +1,4 @@
-package com.example.apigateway.filter;
+package com.example.api_gateway.filter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,7 @@ public class LoggingFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         logger.info("Request to {}", exchange.getRequest().getURI());
-
+        
         return chain.filter(exchange)
                 .then(Mono.fromRunnable(() -> {
                     logger.info("Response status: {}", exchange.getResponse().getStatusCode());

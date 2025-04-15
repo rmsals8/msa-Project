@@ -1,4 +1,4 @@
-package com.example.TripSpring.dto.response;
+package com.example.auth_service.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

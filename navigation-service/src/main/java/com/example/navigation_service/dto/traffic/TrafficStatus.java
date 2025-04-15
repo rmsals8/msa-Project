@@ -1,7 +1,7 @@
 //src/main/java/com/example/TripSpring/dto/traffic/TrafficStatus.java
-package com.example.TripSpring.dto.traffic;
+package com.example.navigation_service.dto.traffic;
 
-import com.example.TripSpring.dto.domain.Location;
+import com.example.common.dto.domain.Location;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
