@@ -1,7 +1,5 @@
 package com.example.auth_service.service;
 
-import com.example.auth_service.domain.auth.AuthProvider;
-import com.example.auth_service.domain.auth.Role;
 import com.example.auth_service.domain.user.User;
 import com.example.auth_service.exception.BadRequestException;
 import com.example.auth_service.exception.ResourceNotFoundException;
@@ -12,6 +10,8 @@ import com.example.auth_service.payload.response.AuthResponse;
 import com.example.auth_service.payload.response.UserProfile;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.JwtTokenProvider;
+import com.example.common.dto.domain.auth.AuthProvider;
+import com.example.common.dto.domain.auth.Role;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

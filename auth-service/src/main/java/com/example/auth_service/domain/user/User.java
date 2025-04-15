@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
-import com.example.auth_service.domain.auth.AuthProvider;
-import com.example.auth_service.domain.auth.Role;
+import com.example.common.dto.domain.auth.AuthProvider;
+import com.example.common.dto.domain.auth.Role;
 
 // // Audit 기능 사용시 필요한 import
 // import org.springframework.data.annotation.CreatedDate;

@@ -3,7 +3,7 @@ package com.example.navigation_service.domain.navigation;
 
 import com.example.common.dto.domain.Location;
 import com.example.navigation_service.dto.route.RouteDetails;
-import com.example.navigation_service.dto.domain.route.TransportMode;
+import com.example.common.dto.domain.route.TransportMode;
 import com.example.navigation_service.dto.navigation.NavigationResponse;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

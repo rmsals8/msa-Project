@@ -1,8 +1,9 @@
 package com.example.auth_service.payload.response;
 
-import com.example.auth_service.domain.auth.AuthProvider;
-import com.example.auth_service.domain.auth.Role;
 import com.example.auth_service.domain.user.User;
+import com.example.common.dto.domain.auth.AuthProvider;
+import com.example.common.dto.domain.auth.Role;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

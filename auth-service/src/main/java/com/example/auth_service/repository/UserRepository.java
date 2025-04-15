@@ -1,7 +1,8 @@
 package com.example.auth_service.repository;
 
 import com.example.auth_service.domain.user.User;
-import com.example.auth_service.domain.auth.AuthProvider;
+import com.example.common.dto.domain.auth.AuthProvider;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

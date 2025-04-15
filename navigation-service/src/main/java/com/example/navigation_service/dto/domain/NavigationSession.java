@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import com.example.navigation_service.dto.request.LocationUpdate;
 import com.example.navigation_service.dto.request.StartNavigationRequest;
 import com.example.navigation_service.dto.response.NavigationStatus;
-
+import com.example.common.dto.domain.route.TransportMode;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 

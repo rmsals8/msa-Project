@@ -1,4 +1,5 @@
 package com.example.place_service.domain.user;
+
 import jakarta.persistence.*;
 import lombok.*;
 // import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -8,8 +9,8 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
-import com.example.place_service.domain.auth.AuthProvider;
-import com.example.place_service.domain.auth.Role;
+import com.example.common.dto.domain.auth.AuthProvider;
+import com.example.common.dto.domain.auth.Role;
 
 // // Audit 기능 사용시 필요한 import
 // import org.springframework.data.annotation.CreatedDate;
@@ -23,13 +24,13 @@ import com.example.place_service.domain.auth.Role;
 @AllArgsConstructor
 @Builder
 public class User {
-    
-     @Id
+
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = true)  // password를 null 허용으로 변경
-    private String password;   
+    @Column(nullable = true) // password를 null 허용으로 변경
+    private String password;
 
     @Column(unique = true)
     private String email;
@@ -41,7 +42,7 @@ public class User {
 
     private String providerId;
 
-    @Column(nullable = true)  // 소셜 로그인 시 전화번호가 없을 수 있음
+    @Column(nullable = true) // 소셜 로그인 시 전화번호가 없을 수 있음
     private String phoneNumber;
 
     private String profileImage;
@@ -60,11 +61,11 @@ public class User {
     private LocalDateTime updatedAt;
 
     @Builder
-    public User(String email, String password, String name, 
-               AuthProvider provider, String providerId, 
-               String phoneNumber, String profileImage, Role role) {
+    public User(String email, String password, String name,
+            AuthProvider provider, String providerId,
+            String phoneNumber, String profileImage, Role role) {
         this.email = email;
-        this.password = password;  // 소셜 로그인의 경우 null이 될 수 있음
+        this.password = password; // 소셜 로그인의 경우 null이 될 수 있음
         this.name = name;
         this.provider = provider;
         this.providerId = providerId;

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import com.example.common.dto.domain.Location;
 import java.time.LocalDateTime;
 import java.time.Duration;
-import com.example.navigation_service.dto.domain.route.TransportMode;
+import com.example.common.dto.domain.route.TransportMode;
 
 @Data
 @Builder

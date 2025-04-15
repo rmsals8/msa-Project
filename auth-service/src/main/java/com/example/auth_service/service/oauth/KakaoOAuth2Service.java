@@ -1,10 +1,11 @@
 package com.example.auth_service.service.oauth;
 
-import com.example.auth_service.domain.auth.AuthProvider;
-import com.example.auth_service.domain.auth.Role;
 import com.example.auth_service.domain.user.User;
 import com.example.auth_service.payload.oauth2.KakaoUserInfo;
 import com.example.auth_service.repository.UserRepository;
+import com.example.common.dto.domain.auth.AuthProvider;
+import com.example.common.dto.domain.auth.Role;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;

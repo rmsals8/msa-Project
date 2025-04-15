@@ -4,7 +4,7 @@ package com.example.navigation_service.service.route;
 
 import com.example.common.dto.domain.Location;
 import com.example.navigation_service.dto.domain.route.GeoPoint;
-import com.example.navigation_service.dto.domain.route.TransportMode;
+import com.example.common.dto.domain.route.TransportMode;
 import com.example.navigation_service.dto.route.RouteDetails;
 import com.example.navigation_service.dto.route.RouteSegmentDetail;
 import com.example.navigation_service.dto.route.RouteStep;

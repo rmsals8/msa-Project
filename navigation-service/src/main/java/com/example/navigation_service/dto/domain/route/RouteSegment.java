@@ -3,6 +3,7 @@ package com.example.navigation_service.dto.domain.route;
 import lombok.Data;
 import lombok.Builder;
 import java.util.List;
+import com.example.common.dto.domain.route.TransportMode;
 
 @Data
 @Builder

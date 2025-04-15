@@ -1,4 +1,4 @@
-package com.example.place_service.domain.auth;
+package com.example.common.dto.domain.auth;
 
 public enum AuthProvider {
     LOCAL, // 일반 이메일/비밀번호 회원가입

@@ -2,8 +2,6 @@
 
 package com.example.auth_service.service;
 
-import com.example.auth_service.domain.auth.AuthProvider;
-import com.example.auth_service.domain.auth.Role;
 import com.example.auth_service.domain.user.User;
 import com.example.auth_service.payload.oauth2.KakaoUserInfo;
 import com.example.auth_service.payload.oauth2.NaverUserInfo;
@@ -14,6 +12,8 @@ import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.JwtTokenProvider;
 import com.example.auth_service.service.oauth.KakaoOAuth2Service;
 import com.example.auth_service.service.oauth.NaverOAuth2Service;
+import com.example.common.dto.domain.auth.AuthProvider;
+import com.example.common.dto.domain.auth.Role;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

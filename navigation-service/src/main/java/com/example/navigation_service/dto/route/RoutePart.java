@@ -2,7 +2,7 @@
 package com.example.navigation_service.dto.route;
 
 import com.example.common.dto.domain.Location;
-import com.example.navigation_service.dto.domain.route.TransportMode;
+import com.example.common.dto.domain.route.TransportMode;
 import lombok.Builder;
 import lombok.Data;
 

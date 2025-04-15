@@ -1,7 +1,7 @@
 package com.example.auth_service.security;
 
 import com.example.auth_service.domain.user.User;
-import com.example.auth_service.domain.auth.AuthProvider;
+import com.example.common.dto.domain.auth.AuthProvider;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

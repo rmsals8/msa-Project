@@ -1,4 +1,4 @@
-package com.example.place_service.domain.auth;
+package com.example.common.dto.domain.auth;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
