@@ -2,12 +2,10 @@ package com.example.auth_service.payload.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-// 회원가입 요청 DTO
 @Getter
 @NoArgsConstructor
 public class SignupRequest {
@@ -20,16 +18,10 @@ public class SignupRequest {
     private String password;
 
     @NotBlank(message = "이름은 필수입니다.")
-    private String name;
+    private String name; // 내부적으로는 userName으로 변환하여 사용
 
-    @NotBlank(message = "전화번호는 필수입니다.")
-    @Pattern(regexp = "^\\d{10,11}$", message = "올바른 전화번호 형식이 아닙니다.")
-    private String phoneNumber;
+    // 전화번호 필드 제거
+
     private boolean termsAgreed;
     private boolean marketingAgreed;
 }
-
-
-
-
-

@@ -1,6 +1,6 @@
 package com.example.auth_service.service;
 
-import com.example.auth_service.domain.user.User;
+import com.example.auth_service.domain.User;
 import com.example.auth_service.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -16,5 +16,10 @@ public class UserService {
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+    }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
     }
 }

@@ -1,34 +1,14 @@
 package com.example.auth_service.repository;
 
-import com.example.auth_service.domain.user.User;
-import com.example.common.dto.domain.auth.AuthProvider;
+import com.example.auth_service.domain.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
-@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUserName(String userName);
 
     Optional<User> findByEmail(String email);
 
-    Optional<User> findByPhoneNumber(String phoneNumber);
-
-    Optional<User> findByProviderId(String providerId);
-
     boolean existsByEmail(String email);
-
-    boolean existsByPhoneNumber(String phoneNumber);
-
-    Optional<User> findByEmailAndProvider(String email, AuthProvider provider);
-
-    @Modifying
-    @Query("UPDATE User u SET u.refreshToken = :refreshToken WHERE u.id = :id")
-    void updateRefreshToken(Long id, String refreshToken);
-
-    @Modifying
-    @Query("UPDATE User u SET u.lastLoginAt = CURRENT_TIMESTAMP WHERE u.id = :id")
-    void updateLastLoginTime(Long id);
 }

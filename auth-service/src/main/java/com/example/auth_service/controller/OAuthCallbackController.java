@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.auth_service.domain.user.User;
+import com.example.auth_service.domain.User;
 import com.example.auth_service.security.JwtTokenProvider;
 import com.example.auth_service.service.oauth.KakaoOAuth2Service;
 import com.example.auth_service.service.oauth.NaverOAuth2Service;

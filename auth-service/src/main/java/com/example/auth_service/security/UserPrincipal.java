@@ -1,6 +1,6 @@
 package com.example.auth_service.security;
 
-import com.example.auth_service.domain.user.User;
+import com.example.auth_service.domain.User;
 import com.example.common.dto.domain.auth.AuthProvider;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
@@ -28,16 +28,17 @@ public class UserPrincipal implements UserDetails {
     private Map<String, Object> attributes;
 
     public static UserPrincipal create(User user) {
+        // 단순화된 권한 설정 (모든 사용자에게 ROLE_USER 부여)
         List<GrantedAuthority> authorities = Collections.singletonList(
-                new SimpleGrantedAuthority(user.getRole().getKey()));
+                new SimpleGrantedAuthority("ROLE_USER"));
 
         return new UserPrincipal(
-                user.getId(),
+                user.getUserNo(), // getId() -> getUserNo()
                 user.getEmail(),
-                user.getPassword(),
-                user.getName(),
-                user.getPhoneNumber(),
-                user.getProvider(),
+                null, // password는 다른 테이블에 있으므로 null
+                user.getUsername(), // getName() -> getUserName()
+                null, // phoneNumber 제거
+                null, // provider 제거
                 authorities,
                 null);
     }

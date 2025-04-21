@@ -34,14 +34,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = resolveToken(request);
             log.debug("Resolved token: {}", token != null ? "Present" : "Not present");
 
-            if (token != null) {
-                log.debug("Validating token");
-                if (tokenProvider.validateToken(token)) {
-                    Authentication auth = tokenProvider.getAuthentication(token);
+            if (token != null && tokenProvider.validateToken(token)) {
+                Authentication auth = tokenProvider.getAuthentication(token);
+                if (auth != null) {
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                    log.debug("Authentication set in SecurityContext: {}", auth != null);
+                    log.debug("Authentication set in SecurityContext: {}", auth);
                 } else {
-                    log.warn("Invalid JWT token");
+                    log.warn("Could not create authentication from token");
                 }
             }
         } catch (Exception e) {

@@ -1,6 +1,6 @@
 package com.example.auth_service.payload.response;
 
-import com.example.auth_service.domain.user.User;
+import com.example.auth_service.domain.User;
 import com.example.common.dto.domain.auth.AuthProvider;
 import com.example.common.dto.domain.auth.Role;
 
@@ -23,13 +23,10 @@ public class UserProfile {
 
     public static UserProfile from(User user) {
         return UserProfile.builder()
-                .id(user.getId())
+                .id(user.getUserNo()) // getId() -> getUserNo()
                 .email(user.getEmail())
-                .name(user.getName())
-                .phoneNumber(user.getPhoneNumber())
-                .profileImage(user.getProfileImage())
-                .provider(user.getProvider())
-                .role(user.getRole())
+                .name(user.getUsername()) // getName() -> getUserName()
+                // phoneNumber, profileImage, provider, role 제거
                 .build();
     }
 }

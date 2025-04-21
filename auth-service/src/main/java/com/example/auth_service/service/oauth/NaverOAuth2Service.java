@@ -1,11 +1,12 @@
-// src/main/java/com/example/TripSpring/service/oauth/NaverOAuth2Service.java
 package com.example.auth_service.service.oauth;
 
-import com.example.auth_service.domain.user.User;
+import com.example.auth_service.domain.User;
+import com.example.auth_service.domain.SocialLogin;
+import com.example.auth_service.domain.Log;
 import com.example.auth_service.payload.oauth2.NaverUserInfo;
 import com.example.auth_service.repository.UserRepository;
-import com.example.common.dto.domain.auth.AuthProvider;
-import com.example.common.dto.domain.auth.Role;
+import com.example.auth_service.repository.SocialLoginRepository;
+import com.example.auth_service.repository.LogRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,6 +29,11 @@ import java.util.Optional;
 public class NaverOAuth2Service {
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
+    private final SocialLoginRepository socialLoginRepository;
+    private final LogRepository logRepository;
+
+    // 네이버 소셜 로그인 코드
+    private static final int NAVER_SOCIAL_CODE = 5;
 
     @Value("${app.api.naver.client-id2}")
     private String clientId;
@@ -100,26 +107,77 @@ public class NaverOAuth2Service {
 
     public User getOrCreateUser(String accessToken) {
         NaverUserInfo userInfo = getUserInfo(accessToken);
+        String naverUserId = userInfo.getId();
 
-        // 기존 사용자 조회
-        Optional<User> existingUser = userRepository.findByEmailAndProvider(
-                userInfo.getEmail(),
-                AuthProvider.NAVER);
+        // 1. 소셜 로그인 정보로 기존 사용자 찾기
+        Optional<SocialLogin> existingSocialLogin = socialLoginRepository.findByExternalIdAndSocialCode(
+                naverUserId, NAVER_SOCIAL_CODE);
 
-        if (existingUser.isPresent()) {
-            return existingUser.get();
+        if (existingSocialLogin.isPresent()) {
+            // 기존 소셜 로그인 사용자가 있으면 소셜 정보 업데이트
+            SocialLogin socialLogin = existingSocialLogin.get();
+            socialLogin.setAccessToken(accessToken);
+            socialLogin.setUpdateDate(LocalDateTime.now());
+            socialLoginRepository.save(socialLogin);
+
+            // 사용자 정보 조회
+            Optional<User> user = userRepository.findById(socialLogin.getUserNo());
+            if (user.isPresent()) {
+                // 로그인 성공 로그 기록
+                saveLog(user.get().getUserNo(), "NAVER_LOGIN_SUCCESS",
+                        "네이버 로그인 성공: " + naverUserId, "127.0.0.1", "Unknown");
+                return user.get();
+            }
         }
 
-        // 새 사용자 생성
-        User newUser = User.builder()
-                .email(userInfo.getEmail())
-                .name(userInfo.getName())
-                .profileImage(userInfo.getProfileImageUrl())
-                .provider(AuthProvider.NAVER)
-                .providerId(userInfo.getId())
-                .role(Role.ROLE_USER)
+        // 2. 기존 네이버 로그인 정보가 없으면, 이메일로 사용자 검색
+        Optional<User> existingUser = userRepository.findByEmail(userInfo.getEmail());
+        User user;
+
+        if (existingUser.isPresent()) {
+            // 이미 해당 이메일로 가입한 사용자가 있으면 소셜 로그인 정보만 추가
+            user = existingUser.get();
+        } else {
+            // 신규 사용자 생성
+            user = User.builder()
+                    .userName(userInfo.getName())
+                    .email(userInfo.getEmail())
+                    .loginType(1) // 소셜 로그인
+                    .build();
+
+            userRepository.save(user);
+        }
+
+        // 3. 소셜 로그인 정보 저장
+        SocialLogin socialLogin = SocialLogin.builder()
+                .userNo(user.getUserNo())
+                .socialCode(NAVER_SOCIAL_CODE)
+                .externalId(naverUserId)
+                .accessToken(accessToken)
+                .updateDate(LocalDateTime.now())
                 .build();
 
-        return userRepository.save(newUser);
+        socialLoginRepository.save(socialLogin);
+
+        // 4. 로그인 성공 로그 기록
+        saveLog(user.getUserNo(), "NAVER_LOGIN_SUCCESS",
+                "네이버 로그인 성공: " + naverUserId, "127.0.0.1", "Unknown");
+
+        return user;
+    }
+
+    // 로그 저장 메서드
+    private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
+        Log log = Log.builder()
+                .userNo(userNo)
+                .actionType(actionType)
+                .description(description)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .status("COMPLETED")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        logRepository.save(log);
     }
 }

@@ -1,8 +1,12 @@
 package com.example.auth_service.service;
 
-import com.example.auth_service.domain.user.User;
+import com.example.auth_service.domain.User;
+import com.example.auth_service.domain.Password;
 import com.example.auth_service.exception.ResourceNotFoundException;
 import com.example.auth_service.repository.UserRepository;
+import com.example.auth_service.repository.PasswordRepository;
+import com.example.auth_service.repository.LogRepository;
+import com.example.auth_service.domain.Log;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -20,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 public class PasswordResetService {
 
     private final UserRepository userRepository;
+    private final PasswordRepository passwordRepository;
+    private final LogRepository logRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailService emailService;
@@ -34,17 +41,15 @@ public class PasswordResetService {
     private static final long TOKEN_EXPIRATION = 600;
 
     /**
-     * 비밀번호 재설정 코드 생성 및 발송
+     * 비밀번호 재설정 코드 생성 및 발송 - 전화번호 검증 제거
      */
-    public void sendResetCode(String email, String phoneNumber) {
+    public void sendResetCode(String email) {
         // 사용자 존재 여부 확인
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
-        // 전화번호 일치 여부 확인
-        if (!user.getPhoneNumber().equals(phoneNumber)) {
-            throw new IllegalArgumentException("전화번호가 일치하지 않습니다.");
-        }
+        // 전화번호 일치 여부 확인 부분 제거
+
         redisTemplate.delete(RESET_CODE_PREFIX + email);
         // 6자리 인증 코드 생성
         String code = generateRandomCode(6);
@@ -56,10 +61,15 @@ public class PasswordResetService {
                 CODE_EXPIRATION,
                 TimeUnit.SECONDS);
 
-        log.info("새로운 인증 코드 생성_ new  verificaion code  generaion : {} for email: {}", code, email);
+        log.info("새로운 인증 코드 생성: {} for email: {}", code, email);
 
         // 이메일로 인증 코드 발송
         emailService.sendPasswordResetCode(email, code);
+
+        // 비밀번호 재설정 요청 로그 기록
+        saveLog(user.getUserNo(), "PASSWORD_RESET_REQUEST",
+                "비밀번호 재설정 코드 발송: " + email,
+                "127.0.0.1", "Unknown");
     }
 
     /**
@@ -71,12 +81,20 @@ public class PasswordResetService {
         log.info("Stored Code: {}, Provided Code: {}", storedCode, code);
 
         if (storedCode == null) {
-            log.warn("사용자 {}의 인증 코드가 존재하지 않거나 만료되었습니다.verificaion code doesn't exsit or expired", email);
+            log.warn("사용자 {}의 인증 코드가 존재하지 않거나 만료되었습니다.", email);
             return false;
         }
 
         boolean isValid = storedCode.equals(code);
-        log.info("인증 코드 검증 결과: {} vierfication result ", isValid);
+        log.info("인증 코드 검증 결과: {}", isValid);
+
+        // 인증 결과 로그 기록
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user != null) {
+            saveLog(user.getUserNo(), "PASSWORD_RESET_VERIFY",
+                    "비밀번호 재설정 코드 검증 " + (isValid ? "성공" : "실패"),
+                    "127.0.0.1", "Unknown");
+        }
 
         return isValid;
     }
@@ -100,11 +118,19 @@ public class PasswordResetService {
 
         log.info("사용자 {}의 비밀번호 재설정 토큰이 생성되었습니다.", email);
 
+        // 토큰 생성 로그 기록
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user != null) {
+            saveLog(user.getUserNo(), "PASSWORD_RESET_TOKEN",
+                    "비밀번호 재설정 토큰 생성",
+                    "127.0.0.1", "Unknown");
+        }
+
         return resetToken;
     }
 
     /**
-     * 비밀번호 업데이트
+     * 비밀번호 업데이트 - Password 테이블 사용
      */
     @Transactional
     public boolean updatePassword(String email, String resetToken, String newPassword) {
@@ -121,15 +147,29 @@ public class PasswordResetService {
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
-            // 비밀번호 암호화 및 업데이트
+            // 비밀번호 암호화 및 업데이트 - Password 테이블 사용
             String encodedPassword = passwordEncoder.encode(newPassword);
-            user.updatePassword(encodedPassword);
-            userRepository.save(user);
+
+            // Password 테이블에서 사용자의 비밀번호 정보 조회
+            Password password = passwordRepository.findByUserNo(user.getUserNo())
+                    .orElse(Password.builder()
+                            .userNo(user.getUserNo())
+                            .salt("")
+                            .build());
+
+            password.setPassword(encodedPassword);
+            password.setUpdateDate(LocalDateTime.now());
+            passwordRepository.save(password);
 
             // 토큰 삭제
             redisTemplate.delete(RESET_TOKEN_PREFIX + resetToken);
 
             log.info("사용자 {}의 비밀번호가 성공적으로 변경되었습니다.", email);
+
+            // 비밀번호 변경 로그 기록
+            saveLog(user.getUserNo(), "PASSWORD_RESET_SUCCESS",
+                    "비밀번호 변경 성공",
+                    "127.0.0.1", "Unknown");
 
             // 비밀번호 변경 알림 이메일 발송
             emailService.sendPasswordChangedNotification(email);
@@ -137,6 +177,14 @@ public class PasswordResetService {
             return true;
         } catch (Exception e) {
             log.error("비밀번호 업데이트 중 오류 발생", e);
+
+            // 비밀번호 변경 실패 로그 기록
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user != null) {
+                saveLog(user.getUserNo(), "PASSWORD_RESET_FAIL",
+                        "비밀번호 변경 실패: " + e.getMessage(),
+                        "127.0.0.1", "Unknown");
+            }
             return false;
         }
     }
@@ -153,5 +201,20 @@ public class PasswordResetService {
         }
 
         return sb.toString();
+    }
+
+    // 로그 저장 메서드
+    private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
+        Log log = Log.builder()
+                .userNo(userNo)
+                .actionType(actionType)
+                .description(description)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .status("COMPLETED")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        logRepository.save(log);
     }
 }

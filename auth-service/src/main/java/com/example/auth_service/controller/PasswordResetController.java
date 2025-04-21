@@ -26,18 +26,17 @@ public class PasswordResetController {
 
         private final PasswordResetService passwordResetService;
 
-        @Operation(summary = "비밀번호 재설정 요청", description = "사용자 이메일과 전화번호로 비밀번호 재설정 메일 발송")
+        @Operation(summary = "비밀번호 재설정 요청", description = "사용자 이메일로 비밀번호 재설정 메일 발송")
         @PostMapping("/reset-request")
         public ResponseEntity<ApiResponse<MessageResponse>> requestPasswordReset(
                         @Valid @RequestBody PasswordResetRequest request) {
+                log.info("비밀번호 재설정 요청: email={}", request.getEmail());
 
-                log.info("비밀번호 재설정 요청: email={}, phoneNumber={}",
-                                request.getEmail(), request.getPhoneNumber());
-
-                passwordResetService.sendResetCode(request.getEmail(), request.getPhoneNumber());
+                // 전화번호 파라미터 제거
+                passwordResetService.sendResetCode(request.getEmail());
 
                 return ResponseEntity.ok(ApiResponse.success(
-                                "인증번호가 발송되었습니다. 이메일 또는 SMS를 확인해주세요.",
+                                "인증번호가 발송되었습니다. 이메일을 확인해주세요.",
                                 new MessageResponse("인증번호가 발송되었습니다.")));
         }
 

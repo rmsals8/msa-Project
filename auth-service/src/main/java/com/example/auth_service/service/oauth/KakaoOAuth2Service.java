@@ -1,10 +1,12 @@
 package com.example.auth_service.service.oauth;
 
-import com.example.auth_service.domain.user.User;
+import com.example.auth_service.domain.User;
+import com.example.auth_service.domain.SocialLogin;
+import com.example.auth_service.domain.Log;
 import com.example.auth_service.payload.oauth2.KakaoUserInfo;
 import com.example.auth_service.repository.UserRepository;
-import com.example.common.dto.domain.auth.AuthProvider;
-import com.example.common.dto.domain.auth.Role;
+import com.example.auth_service.repository.SocialLoginRepository;
+import com.example.auth_service.repository.LogRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +19,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -25,6 +29,11 @@ import java.util.Map;
 public class KakaoOAuth2Service {
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
+    private final SocialLoginRepository socialLoginRepository;
+    private final LogRepository logRepository;
+
+    // 카카오 소셜 로그인 코드
+    private static final int KAKAO_SOCIAL_CODE = 4;
 
     private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
@@ -47,7 +56,7 @@ public class KakaoOAuth2Service {
         params.add("client_id", clientId);
         params.add("redirect_uri", REDIRECT_URI);
         params.add("code", code);
-        params.add("client_secret", clientSecret); // 하드코딩 대신 주입된 값 사용
+        params.add("client_secret", clientSecret);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
@@ -72,23 +81,65 @@ public class KakaoOAuth2Service {
     }
 
     public User getOrCreateUser(String accessToken) {
-        // 기존 KakaoUserInfo의 from() 메서드를 그대로 사용
         KakaoUserInfo kakaoUserInfo = getUserInfo(accessToken);
+        String kakaoUserId = kakaoUserInfo.getId();
+        String email = kakaoUserInfo.getEmail() != null ? kakaoUserInfo.getEmail() : kakaoUserId + "@kakao.com";
 
-        return userRepository.findByProviderId(kakaoUserInfo.getId())
-                .orElseGet(() -> createKakaoUser(kakaoUserInfo));
-    }
+        // 1. 소셜 로그인 정보로 기존 사용자 찾기
+        Optional<SocialLogin> existingSocialLogin = socialLoginRepository.findByExternalIdAndSocialCode(
+                kakaoUserId, KAKAO_SOCIAL_CODE);
 
-    private User createKakaoUser(KakaoUserInfo kakaoUserInfo) {
-        return userRepository.save(User.builder()
-                .email(kakaoUserInfo.getEmail() != null ? kakaoUserInfo.getEmail()
-                        : kakaoUserInfo.getId() + "@kakao.com")
-                .name(kakaoUserInfo.getName())
-                .providerId(kakaoUserInfo.getId())
-                .provider(AuthProvider.KAKAO)
-                .role(Role.ROLE_USER)
-                .profileImage(kakaoUserInfo.getProfileImageUrl())
-                .build());
+        if (existingSocialLogin.isPresent()) {
+            // 기존 소셜 로그인 사용자가 있으면 소셜 정보 업데이트
+            SocialLogin socialLogin = existingSocialLogin.get();
+            socialLogin.setAccessToken(accessToken);
+            socialLogin.setUpdateDate(LocalDateTime.now());
+            socialLoginRepository.save(socialLogin);
+
+            // 사용자 정보 조회
+            Optional<User> user = userRepository.findById(socialLogin.getUserNo());
+            if (user.isPresent()) {
+                // 로그인 성공 로그 기록
+                saveLog(user.get().getUserNo(), "KAKAO_LOGIN_SUCCESS",
+                        "카카오 로그인 성공: " + kakaoUserId, "127.0.0.1", "Unknown");
+                return user.get();
+            }
+        }
+
+        // 2. 기존 카카오 로그인 정보가 없으면, 이메일로 사용자 검색
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        User user;
+
+        if (existingUser.isPresent()) {
+            // 이미 해당 이메일로 가입한 사용자가 있으면 소셜 로그인 정보만 추가
+            user = existingUser.get();
+        } else {
+            // 신규 사용자 생성
+            user = User.builder()
+                    .userName(kakaoUserInfo.getName())
+                    .email(email)
+                    .loginType(1) // 소셜 로그인
+                    .build();
+
+            userRepository.save(user);
+        }
+
+        // 3. 소셜 로그인 정보 저장
+        SocialLogin socialLogin = SocialLogin.builder()
+                .userNo(user.getUserNo())
+                .socialCode(KAKAO_SOCIAL_CODE)
+                .externalId(kakaoUserId)
+                .accessToken(accessToken)
+                .updateDate(LocalDateTime.now())
+                .build();
+
+        socialLoginRepository.save(socialLogin);
+
+        // 4. 로그인 성공 로그 기록
+        saveLog(user.getUserNo(), "KAKAO_LOGIN_SUCCESS",
+                "카카오 로그인 성공: " + kakaoUserId, "127.0.0.1", "Unknown");
+
+        return user;
     }
 
     public KakaoUserInfo getUserInfo(String accessToken) {
@@ -117,4 +168,18 @@ public class KakaoOAuth2Service {
         }
     }
 
+    // 로그 저장 메서드
+    private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
+        Log log = Log.builder()
+                .userNo(userNo)
+                .actionType(actionType)
+                .description(description)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .status("COMPLETED")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        logRepository.save(log);
+    }
 }
