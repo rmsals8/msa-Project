@@ -16,13 +16,14 @@ public class Password {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "password_id")
     private Long passwordId;
-
-    @Column(name = "user_no")
-    private Long userNo;
-
+    
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_no", referencedColumnName = "user_no")
+    private User user;
+    
     private String salt;
     private String password;
-
+    
     @Column(name = "update_date")
     private LocalDateTime updateDate;
 }

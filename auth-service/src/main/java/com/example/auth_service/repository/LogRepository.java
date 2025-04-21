@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.example.auth_service.domain.Log;
 
 public interface LogRepository extends JpaRepository<Log, Long> {
-    List<Log> findByUserNo(Long userNo);
+    List<Log> findByUser_UserNo(Long userNo);
 
     List<Log> findByActionType(String actionType);
 

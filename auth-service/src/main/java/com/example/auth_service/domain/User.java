@@ -30,9 +30,21 @@ public class User implements UserDetails {
     @Column(name = "login_type")
     private Integer loginType; // 0: 일반, 1: 소셜
 
-    // 약관 동의 정보와의 관계 추가
+    // 양방향 관계 설정 (필요한 경우)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Password password;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private RefreshToken refreshToken;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserAgreement userAgreement;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SocialLogin> socialLogins;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Log> logs;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

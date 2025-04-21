@@ -14,13 +14,13 @@ public class RefreshToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "user_no")
-    private Long userNo;
-
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_no", referencedColumnName = "user_no")
+    private User user;
+    
     @Column(name = "refresh_token")
     private String refreshToken;
-
     public RefreshToken update(String newRefreshToken) {
         this.refreshToken = newRefreshToken;
         return this;

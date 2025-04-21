@@ -29,7 +29,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email : " + email));
 
         // 비밀번호 정보 조회
-        Password passwordEntity = passwordRepository.findByUserNo(user.getUserNo())
+        Password passwordEntity = passwordRepository.findByUser_UserNo(user.getUserNo())
                 .orElseThrow(() -> new UsernameNotFoundException("Password not found for user : " + email));
 
         // 사용자 정보와 비밀번호 정보를 함께 전달

@@ -16,19 +16,20 @@ public class SocialLogin {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "social_login_id")
     private Long socialLoginId;
-
-    @Column(name = "user_no")
-    private Long userNo;
-
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_no", referencedColumnName = "user_no")
+    private User user;
+    
     @Column(name = "social_code")
     private Integer socialCode;
-
+    
     @Column(name = "external_id")
     private String externalId;
-
+    
     @Column(name = "access_token")
     private String accessToken;
-
+    
     @Column(name = "update_date")
     private LocalDateTime updateDate;
 }

@@ -16,25 +16,24 @@ public class Log {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "log_id")
     private Long logId;
-
-    @Column(name = "user_no")
-    private Long userNo;
-
-    @Column(name = "action_type", nullable = false, length = 50)
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_no", referencedColumnName = "user_no")
+    private User user;
+    
+    @Column(name = "action_type")
     private String actionType;
-
-    @Column(name = "ip_address", nullable = false, length = 45)
+    
+    @Column(name = "ip_address")
     private String ipAddress;
-
+    
     @Column(name = "user_agent")
     private String userAgent;
-
-    @Column(name = "description")
+    
     private String description;
-
-    @Column(name = "created_at", nullable = false)
+    
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "status", nullable = false)
+    
     private String status;
 }

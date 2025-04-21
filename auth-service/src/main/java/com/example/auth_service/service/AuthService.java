@@ -15,7 +15,6 @@ import com.example.auth_service.exception.ResourceNotFoundException;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.repository.PasswordRepository;
 import com.example.auth_service.repository.RefreshTokenRepository;
-import com.example.auth_service.repository.UserAgreementRepository;
 import com.example.auth_service.repository.LogRepository;
 import com.example.auth_service.security.JwtTokenProvider;
 
@@ -56,7 +55,7 @@ public class AuthService {
 
         // RefreshToken 저장
         RefreshToken refreshTokenEntity = RefreshToken.builder()
-                .userNo(user.getUserNo())
+                .user(user)
                 .refreshToken(refreshToken)
                 .build();
         refreshTokenRepository.save(refreshTokenEntity);
@@ -117,7 +116,7 @@ public class AuthService {
         // RefreshToken 테이블 업데이트
         RefreshToken refreshTokenEntity = refreshTokenRepository.findByUserNo(user.getUserNo())
                 .orElse(RefreshToken.builder()
-                        .userNo(user.getUserNo())
+                        .user(user)
                         .build());
 
         refreshTokenEntity.setRefreshToken(newRefreshToken);
@@ -155,7 +154,7 @@ public class AuthService {
 
             if (user != null) {
                 // RefreshToken 테이블에서도 삭제
-                refreshTokenRepository.deleteByUserNo(user.getUserNo());
+                refreshTokenRepository.deleteByUser_UserNo(user.getUserNo());
 
                 // 로그아웃 로그 기록
                 saveLog(user.getUserNo(), "LOGOUT", "로그아웃 성공",
@@ -189,7 +188,7 @@ public class AuthService {
             // RefreshToken 테이블에도 저장
             RefreshToken refreshTokenEntity = refreshTokenRepository.findByUserNo(user.getUserNo())
                     .orElse(RefreshToken.builder()
-                            .userNo(user.getUserNo())
+                            .user(user)
                             .build());
 
             refreshTokenEntity.setRefreshToken(refreshToken);
@@ -233,10 +232,16 @@ public class AuthService {
                 .build();
     }
 
-    // 로그 저장 메서드
-    private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
+// 로그 저장 메서드
+private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
+        // userNo로 User 객체 조회 (userNo가 null일 수 있으므로 조건부 처리)
+        User user = null;
+        if (userNo != null) {
+            user = userRepository.findById(userNo).orElse(null);
+        }
+        
         Log log = Log.builder()
-                .userNo(userNo)
+                .user(user)  // User 객체 전달
                 .actionType(actionType)
                 .description(description)
                 .ipAddress(ipAddress)
@@ -244,7 +249,7 @@ public class AuthService {
                 .status("COMPLETED")
                 .createdAt(LocalDateTime.now())
                 .build();
-
+        
         logRepository.save(log);
     }
 
@@ -294,7 +299,7 @@ public class AuthService {
         // 비밀번호 저장
         String salt = generateSalt();
         Password password = Password.builder()
-                .userNo(savedUser.getUserNo())
+                .user(user)
                 .salt(salt)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .updateDate(LocalDateTime.now())

@@ -151,9 +151,9 @@ public class PasswordResetService {
             String encodedPassword = passwordEncoder.encode(newPassword);
 
             // Password 테이블에서 사용자의 비밀번호 정보 조회
-            Password password = passwordRepository.findByUserNo(user.getUserNo())
+            Password password = passwordRepository.findByUser_UserNo(user.getUserNo())
                     .orElse(Password.builder()
-                            .userNo(user.getUserNo())
+                            .user(user)
                             .salt("")
                             .build());
 
@@ -204,17 +204,24 @@ public class PasswordResetService {
     }
 
     // 로그 저장 메서드
-    private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
-        Log log = Log.builder()
-                .userNo(userNo)
-                .actionType(actionType)
-                .description(description)
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
-                .status("COMPLETED")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        logRepository.save(log);
+  // 로그 저장 메서드
+private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
+    // userNo로 User 객체 조회 (userNo가 null일 수 있으므로 조건부 처리)
+    User user = null;
+    if (userNo != null) {
+        user = userRepository.findById(userNo).orElse(null);
     }
+    
+    Log log = Log.builder()
+            .user(user)  // User 객체 전달
+            .actionType(actionType)
+            .description(description)
+            .ipAddress(ipAddress)
+            .userAgent(userAgent)
+            .status("COMPLETED")
+            .createdAt(LocalDateTime.now())
+            .build();
+    
+    logRepository.save(log);
+}
 }

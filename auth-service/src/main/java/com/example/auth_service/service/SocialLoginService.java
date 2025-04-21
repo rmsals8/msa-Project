@@ -69,10 +69,8 @@ public class SocialLoginService {
                 socialLoginRepository.save(socialLogin);
 
                 // 사용자 정보 조회
-                Optional<User> existingUser = userRepository.findById(socialLogin.getUserNo());
-                if (existingUser.isPresent()) {
-                    user = existingUser.get();
-                } else {
+                user = socialLogin.getUser();
+                if (user == null) {
                     // 소셜 로그인 정보는 있지만 사용자 정보가 없는 경우
                     throw new RuntimeException("Social login exists but user not found");
                 }
@@ -97,13 +95,12 @@ public class SocialLoginService {
 
                 // 3. 소셜 로그인 정보 저장
                 SocialLogin socialLogin = SocialLogin.builder()
-                        .userNo(user.getUserNo())
-                        .socialCode(NAVER_SOCIAL_CODE)
-                        .externalId(naverUserId)
-                        .accessToken(request.getAccessToken())
-                        .updateDate(LocalDateTime.now())
-                        .build();
-
+                    .user(user)  // userNo 대신 user 객체 전달
+                    .socialCode(NAVER_SOCIAL_CODE)
+                    .externalId(naverUserId)
+                    .accessToken(request.getAccessToken())
+                    .updateDate(LocalDateTime.now())
+                    .build();
                 socialLoginRepository.save(socialLogin);
             }
 
@@ -112,10 +109,10 @@ public class SocialLoginService {
             String refreshToken = tokenProvider.createRefreshToken(user.getEmail());
 
             // 5. RefreshToken 저장
-            saveRefreshToken(user.getUserNo(), refreshToken);
+            saveRefreshToken(user, refreshToken);
 
             // 6. 로그인 성공 로그 기록
-            saveLog(user.getUserNo(), "NAVER_LOGIN_SUCCESS",
+            saveLog(user, "NAVER_LOGIN_SUCCESS",
                     "네이버 로그인 성공: " + naverUserId + (isNewUser ? " (신규 가입)" : ""),
                     "127.0.0.1", "Unknown");
 
@@ -160,10 +157,8 @@ public class SocialLoginService {
                 socialLoginRepository.save(socialLogin);
 
                 // 사용자 정보 조회
-                Optional<User> existingUser = userRepository.findById(socialLogin.getUserNo());
-                if (existingUser.isPresent()) {
-                    user = existingUser.get();
-                } else {
+                user = socialLogin.getUser();
+                if (user == null) {
                     // 소셜 로그인 정보는 있지만 사용자 정보가 없는 경우
                     throw new RuntimeException("Social login exists but user not found");
                 }
@@ -188,7 +183,7 @@ public class SocialLoginService {
 
                 // 3. 소셜 로그인 정보 저장
                 SocialLogin socialLogin = SocialLogin.builder()
-                        .userNo(user.getUserNo())
+                        .user(user)  // userNo 대신 user 객체 전달
                         .socialCode(KAKAO_SOCIAL_CODE)
                         .externalId(kakaoUserId)
                         .accessToken(request.getAccessToken())
@@ -203,10 +198,10 @@ public class SocialLoginService {
             String refreshToken = tokenProvider.createRefreshToken(user.getEmail());
 
             // 5. RefreshToken 저장
-            saveRefreshToken(user.getUserNo(), refreshToken);
+            saveRefreshToken(user, refreshToken);
 
             // 6. 로그인 성공 로그 기록
-            saveLog(user.getUserNo(), "KAKAO_LOGIN_SUCCESS",
+            saveLog(user, "KAKAO_LOGIN_SUCCESS",
                     "카카오 로그인 성공: " + kakaoUserId + (isNewUser ? " (신규 가입)" : ""),
                     "127.0.0.1", "Unknown");
 
@@ -230,18 +225,18 @@ public class SocialLoginService {
     }
 
     // RefreshToken 저장
-    private void saveRefreshToken(Long userNo, String refreshToken) {
+    private void saveRefreshToken(User user, String refreshToken) {
         // Redis에 저장
         redisTemplate.opsForValue().set(
                 "RT:" + refreshToken,
-                userNo.toString(),
+                user.getUserNo().toString(),
                 tokenProvider.getRefreshTokenValidityInMilliseconds(),
                 TimeUnit.MILLISECONDS);
 
         // DB에도 저장
-        RefreshToken refreshTokenEntity = refreshTokenRepository.findByUserNo(userNo)
+        RefreshToken refreshTokenEntity = refreshTokenRepository.findByUserNo(user.getUserNo())
                 .orElse(RefreshToken.builder()
-                        .userNo(userNo)
+                        .user(user)
                         .build());
 
         refreshTokenEntity.setRefreshToken(refreshToken);
@@ -258,9 +253,9 @@ public class SocialLoginService {
     }
 
     // 로그 저장 메서드
-    private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
+    private void saveLog(User user, String actionType, String description, String ipAddress, String userAgent) {
         Log log = Log.builder()
-                .userNo(userNo)
+                .user(user)  // User 객체 전달
                 .actionType(actionType)
                 .description(description)
                 .ipAddress(ipAddress)
@@ -268,7 +263,7 @@ public class SocialLoginService {
                 .status("COMPLETED")
                 .createdAt(LocalDateTime.now())
                 .build();
-
+        
         logRepository.save(log);
     }
 }

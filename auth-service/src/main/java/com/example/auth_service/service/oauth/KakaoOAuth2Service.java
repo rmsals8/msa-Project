@@ -97,12 +97,12 @@ public class KakaoOAuth2Service {
             socialLoginRepository.save(socialLogin);
 
             // 사용자 정보 조회
-            Optional<User> user = userRepository.findById(socialLogin.getUserNo());
-            if (user.isPresent()) {
+            User user = socialLogin.getUser();
+            if (user != null) {
                 // 로그인 성공 로그 기록
-                saveLog(user.get().getUserNo(), "KAKAO_LOGIN_SUCCESS",
+                saveLog(user, "KAKAO_LOGIN_SUCCESS",
                         "카카오 로그인 성공: " + kakaoUserId, "127.0.0.1", "Unknown");
-                return user.get();
+                return user;
             }
         }
 
@@ -126,7 +126,7 @@ public class KakaoOAuth2Service {
 
         // 3. 소셜 로그인 정보 저장
         SocialLogin socialLogin = SocialLogin.builder()
-                .userNo(user.getUserNo())
+                .user(user)  // userNo 대신 user 객체 사용
                 .socialCode(KAKAO_SOCIAL_CODE)
                 .externalId(kakaoUserId)
                 .accessToken(accessToken)
@@ -136,7 +136,7 @@ public class KakaoOAuth2Service {
         socialLoginRepository.save(socialLogin);
 
         // 4. 로그인 성공 로그 기록
-        saveLog(user.getUserNo(), "KAKAO_LOGIN_SUCCESS",
+        saveLog(user, "KAKAO_LOGIN_SUCCESS",
                 "카카오 로그인 성공: " + kakaoUserId, "127.0.0.1", "Unknown");
 
         return user;
@@ -169,9 +169,9 @@ public class KakaoOAuth2Service {
     }
 
     // 로그 저장 메서드
-    private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
+    private void saveLog(User user, String actionType, String description, String ipAddress, String userAgent) {
         Log log = Log.builder()
-                .userNo(userNo)
+                .user(user)  // userNo 대신 user 객체 사용
                 .actionType(actionType)
                 .description(description)
                 .ipAddress(ipAddress)
