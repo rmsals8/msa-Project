@@ -1,14 +1,14 @@
 package com.example.auth_service.service;
 
 import com.example.auth_service.domain.User;
+import com.example.auth_service.dto.oauth2.KakaoUserInfo;
+import com.example.auth_service.dto.oauth2.NaverUserInfo;
+import com.example.auth_service.dto.request.social.SocialLoginRequest;
+import com.example.auth_service.dto.response.auth.AuthResponse;
+import com.example.auth_service.dto.response.auth.UserProfile;
 import com.example.auth_service.domain.SocialLogin;
 import com.example.auth_service.domain.Log;
 import com.example.auth_service.domain.RefreshToken;
-import com.example.auth_service.payload.oauth2.KakaoUserInfo;
-import com.example.auth_service.payload.oauth2.NaverUserInfo;
-import com.example.auth_service.payload.request.SocialLoginRequest;
-import com.example.auth_service.payload.response.AuthResponse;
-import com.example.auth_service.payload.response.UserProfile;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.repository.SocialLoginRepository;
 import com.example.auth_service.repository.RefreshTokenRepository;

@@ -1,8 +1,7 @@
 package com.example.auth_service.controller;
 
 import com.example.auth_service.domain.User;
-import com.example.auth_service.security.CurrentUser;
-import com.example.auth_service.security.UserPrincipal;
+
 import com.example.auth_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,9 +1,9 @@
 package com.example.auth_service.service.oauth;
 
 import com.example.auth_service.domain.User;
+import com.example.auth_service.dto.oauth2.KakaoUserInfo;
 import com.example.auth_service.domain.SocialLogin;
 import com.example.auth_service.domain.Log;
-import com.example.auth_service.payload.oauth2.KakaoUserInfo;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.repository.SocialLoginRepository;
 import com.example.auth_service.repository.LogRepository;

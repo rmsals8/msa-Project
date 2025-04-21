@@ -1,4 +1,4 @@
-package com.example.auth_service.payload.oauth2;
+package com.example.auth_service.dto.oauth2;
 
 import java.util.Map;
 

@@ -1,14 +1,12 @@
-package com.example.auth_service.payload.request;
+package com.example.auth_service.dto.request.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Data;
 
-@Getter
-@NoArgsConstructor
-public class SignupRequest {
+@Data
+public class CompleteSignupRequest {
     @NotBlank(message = "이메일은 필수입니다.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
     private String email;
@@ -18,9 +16,10 @@ public class SignupRequest {
     private String password;
 
     @NotBlank(message = "이름은 필수입니다.")
-    private String name; // 내부적으로는 userName으로 변환하여 사용
+    private String name;
 
-    // 전화번호 필드 제거
+    @NotBlank(message = "인증 토큰은 필수입니다.")
+    private String verificationToken;
 
     private boolean termsAgreed;
     private boolean marketingAgreed;

@@ -26,6 +26,52 @@ public class EmailService {
     @Value("${app.email.sender-name:Trip Helper}")
     private String senderName;
 
+    public void sendEmailVerificationCode(String to, String code) {
+        try {
+            String subject = "[Trip Helper] 회원가입 인증번호";
+            String content = getEmailVerificationContent(code);
+
+            sendEmail(to, subject, content);
+            log.info("회원가입 인증 이메일 발송 완료: {}", to);
+        } catch (Exception e) {
+            log.error("회원가입 인증 이메일 발송 실패: {}", to, e);
+            throw new RuntimeException("이메일 발송에 실패했습니다", e);
+        }
+    }
+
+    private String getEmailVerificationContent(String code) {
+        return "<!DOCTYPE html>"
+                + "<html>"
+                + "<head>"
+                + "<meta charset=\"UTF-8\">"
+                + "<title>회원가입 인증번호</title>"
+                + "<style>"
+                + "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }"
+                + ".container { max-width: 600px; margin: 0 auto; padding: 20px; }"
+                + ".header { background-color: #3498db; color: white; padding: 15px; text-align: center; }"
+                + ".content { padding: 20px; background-color: #f9f9f9; }"
+                + ".code { font-size: 32px; font-weight: bold; text-align: center; color: #3498db; margin: 25px 0; letter-spacing: 5px; }"
+                + ".footer { text-align: center; margin-top: 20px; font-size: 12px; color: #777; }"
+                + "</style>"
+                + "</head>"
+                + "<body>"
+                + "<div class=\"container\">"
+                + "<div class=\"header\"><h2>Trip Helper 회원가입</h2></div>"
+                + "<div class=\"content\">"
+                + "<p>안녕하세요!</p>"
+                + "<p>회원가입을 위한 인증번호입니다. 아래 6자리 코드를 입력해주세요:</p>"
+                + "<div class=\"code\">" + code + "</div>"
+                + "<p>이 인증번호는 5분간 유효합니다.</p>"
+                + "</div>"
+                + "<div class=\"footer\">"
+                + "<p>Trip Helper &copy; 2025. All rights reserved.</p>"
+                + "<p>본 메일은 발신 전용으로 회신되지 않습니다.</p>"
+                + "</div>"
+                + "</div>"
+                + "</body>"
+                + "</html>";
+    }
+
     /**
      * 비밀번호 재설정 코드를 이메일로 발송
      */

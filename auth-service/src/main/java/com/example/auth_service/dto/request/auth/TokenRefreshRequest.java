@@ -1,8 +1,9 @@
-package com.example.auth_service.payload.request;
+package com.example.auth_service.dto.request.auth;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.NotBlank;
+
 // 토큰 갱신 요청 DTO
 @Getter
 @NoArgsConstructor

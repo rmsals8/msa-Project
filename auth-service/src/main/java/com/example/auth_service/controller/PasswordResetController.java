@@ -1,11 +1,11 @@
 package com.example.auth_service.controller;
 
 import com.example.common.response.ApiResponse;
-import com.example.auth_service.payload.request.PasswordResetRequest;
-import com.example.auth_service.payload.request.PasswordUpdateRequest;
-import com.example.auth_service.payload.request.VerifyResetCodeRequest;
-import com.example.auth_service.payload.response.MessageResponse;
-import com.example.auth_service.payload.response.VerificationResponse;
+import com.example.auth_service.dto.request.auth.PasswordResetRequest;
+import com.example.auth_service.dto.request.auth.PasswordUpdateRequest;
+import com.example.auth_service.dto.request.auth.VerifyResetCodeRequest;
+import com.example.auth_service.dto.response.auth.MessageResponse;
+import com.example.auth_service.dto.response.auth.VerificationResponse;
 import com.example.auth_service.service.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -30,6 +30,10 @@ public class User implements UserDetails {
     @Column(name = "login_type")
     private Integer loginType; // 0: 일반, 1: 소셜
 
+    // 약관 동의 정보와의 관계 추가
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserAgreement userAgreement;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));

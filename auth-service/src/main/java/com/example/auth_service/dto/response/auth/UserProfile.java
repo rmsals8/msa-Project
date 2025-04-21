@@ -1,4 +1,4 @@
-package com.example.auth_service.payload.response;
+package com.example.auth_service.dto.response.auth;
 
 import com.example.auth_service.domain.User;
 import com.example.common.dto.domain.auth.AuthProvider;

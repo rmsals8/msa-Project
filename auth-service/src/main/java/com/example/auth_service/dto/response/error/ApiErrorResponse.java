@@ -1,4 +1,4 @@
-package com.example.auth_service.dto.response;
+package com.example.auth_service.dto.response.error;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,11 +19,10 @@ public class ApiErrorResponse {
 
     public static ApiErrorResponse of(int status, String error, String message) {
         return new ApiErrorResponse(
-            LocalDateTime.now(),
-            status,
-            error,
-            message,
-            "/api/v1/routes/recommended-path"
-        );
+                LocalDateTime.now(),
+                status,
+                error,
+                message,
+                "/api/v1/routes/recommended-path");
     }
 }

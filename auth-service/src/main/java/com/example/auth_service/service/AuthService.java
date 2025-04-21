@@ -1,19 +1,21 @@
 package com.example.auth_service.service;
 
 import com.example.auth_service.domain.User;
+import com.example.auth_service.domain.UserAgreement;
+import com.example.auth_service.dto.request.auth.CompleteSignupRequest;
+import com.example.auth_service.dto.request.auth.LoginRequest;
+import com.example.auth_service.dto.request.auth.TokenRefreshRequest;
+import com.example.auth_service.dto.response.auth.AuthResponse;
+import com.example.auth_service.dto.response.auth.UserProfile;
 import com.example.auth_service.domain.Password;
 import com.example.auth_service.domain.Log;
 import com.example.auth_service.domain.RefreshToken;
 import com.example.auth_service.exception.BadRequestException;
 import com.example.auth_service.exception.ResourceNotFoundException;
-import com.example.auth_service.payload.request.LoginRequest;
-import com.example.auth_service.payload.request.SignupRequest;
-import com.example.auth_service.payload.request.TokenRefreshRequest;
-import com.example.auth_service.payload.response.AuthResponse;
-import com.example.auth_service.payload.response.UserProfile;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.repository.PasswordRepository;
 import com.example.auth_service.repository.RefreshTokenRepository;
+import com.example.auth_service.repository.UserAgreementRepository;
 import com.example.auth_service.repository.LogRepository;
 import com.example.auth_service.security.JwtTokenProvider;
 
@@ -46,41 +48,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
     private final RedisTemplate<String, String> redisTemplate;
-
-    @Transactional
-    public AuthResponse signup(SignupRequest request) {
-        // 이메일 중복 체크
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException("이미 사용중인 이메일입니다.");
-        }
-
-        // 사용자 생성
-        User user = User.builder()
-                .userName(request.getName())
-                .email(request.getEmail())
-                .loginType(0) // 일반 로그인은 0
-                .build();
-
-        userRepository.save(user);
-
-        // 비밀번호 저장 - 저장된 사용자의 ID를 가져와서 사용
-        String salt = generateSalt(); // 솔트 생성 함수 추가
-        Password password = Password.builder()
-                .userNo(user.getUserNo())
-                .salt(salt)
-                .password(passwordEncoder.encode(request.getPassword()))
-                .updateDate(LocalDateTime.now())
-                .build();
-
-        passwordRepository.save(password);
-
-        // 회원가입 로그 기록
-        saveLog(user.getUserNo(), "SIGNUP", "회원가입 성공: " + request.getEmail(),
-                "127.0.0.1", "Unknown");
-
-        // 중요: 자동 로그인을 시도하지 않고 성공 응답만 반환
-        return createAuthResponse(user);
-    }
 
     // 회원가입 성공 후 토큰 생성만 (로그인 시도 없이)
     private AuthResponse createAuthResponse(User user) {
@@ -279,5 +246,70 @@ public class AuthService {
                 .build();
 
         logRepository.save(log);
+    }
+
+    // 새 의존성 추가
+    private final EmailVerificationService emailVerificationService;
+
+    @Transactional
+    public AuthResponse completeSignup(CompleteSignupRequest request) {
+        // 이메일 중복 체크
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("이미 사용중인 이메일입니다.");
+        }
+
+        // 인증 토큰 검증
+        boolean isTokenValid = emailVerificationService.validateVerificationToken(
+                request.getEmail(), request.getVerificationToken());
+
+        if (!isTokenValid) {
+            throw new BadRequestException("유효하지 않은 인증 토큰입니다. 이메일 인증을 다시 진행해주세요.");
+        }
+
+        // 사용자 생성
+        User user = User.builder()
+                .userName(request.getName())
+                .email(request.getEmail())
+                .loginType(0) // 일반 로그인은 0
+                .build();
+
+        // 로그 추가
+        log.info("약관 동의 정보: termsAgreed={}, marketingAgreed={}",
+                request.isTermsAgreed(), request.isMarketingAgreed());
+
+        // 약관 동의 정보 생성
+        UserAgreement userAgreement = UserAgreement.builder()
+                .user(user)
+                .termsAgreed(request.isTermsAgreed())
+                .marketingAgreed(request.isMarketingAgreed())
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        // 사용자와 약관 동의 정보 연결
+        user.setUserAgreement(userAgreement);
+
+        // 사용자 저장 (cascade로 인해 userAgreement도 함께 저장됨)
+        User savedUser = userRepository.save(user);
+
+        // 비밀번호 저장
+        String salt = generateSalt();
+        Password password = Password.builder()
+                .userNo(savedUser.getUserNo())
+                .salt(salt)
+                .password(passwordEncoder.encode(request.getPassword()))
+                .updateDate(LocalDateTime.now())
+                .build();
+
+        passwordRepository.save(password);
+
+        // 회원가입 로그 기록
+        saveLog(savedUser.getUserNo(), "SIGNUP", "회원가입 성공: " + request.getEmail(),
+                "127.0.0.1", "Unknown");
+
+        // 약관 동의 정보 저장 직전에 로그 추가
+        log.info("약관 동의 정보 저장: userNo={}, termsAgreed={}, marketingAgreed={}",
+                savedUser.getUserNo(), request.isTermsAgreed(), request.isMarketingAgreed());
+        // 자동 로그인을 시도하지 않고 성공 응답만 반환
+        return createAuthResponse(savedUser);
     }
 }

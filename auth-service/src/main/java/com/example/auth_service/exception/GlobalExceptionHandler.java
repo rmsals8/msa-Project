@@ -2,12 +2,14 @@ package com.example.auth_service.exception;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import com.example.auth_service.dto.response.error.ApiErrorResponse;
 import com.example.common.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import com.example.auth_service.dto.response.ApiErrorResponse;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
