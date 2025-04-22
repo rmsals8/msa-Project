@@ -31,6 +31,7 @@ public class User implements UserDetails {
 
     @Column(name = "login_type")
     private Integer loginType; // 0: 일반, 1: 소셜
+    
 
     // 양방향 관계 설정 (필요한 경우)
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

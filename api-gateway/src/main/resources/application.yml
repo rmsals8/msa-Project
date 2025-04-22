@@ -2,6 +2,7 @@ server:
   port: 8081
 
 spring:
+
   main:
     web-application-type: reactive
   application:
@@ -47,3 +48,8 @@ management:
   endpoint:
     health:
       show-details: ALWAYS
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
