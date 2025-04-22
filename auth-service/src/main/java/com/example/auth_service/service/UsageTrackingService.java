@@ -79,12 +79,16 @@ public class UsageTrackingService {
     }
 
     public int getRemainingUsage(Long userNo) {
+        log.info("getRemainingUsage 호출 - userNo: {}", userNo);
+
         User user = userRepository.findById(userNo)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userNo));
+        log.info("사용자 조회 완료: {}", user.getUserNo());
 
         UserSubscription subscription = subscriptionRepository
                 .findByUserAndStatus(user, UserSubscription.SubscriptionStatus.ACTIVE)
                 .orElseGet(() -> createDefaultFreeSubscription(user));
+        log.info("구독 정보: planType={}, status={}", subscription.getPlanType(), subscription.getStatus());
 
         LocalDate today = LocalDate.now();
         DailyUsage dailyUsage = dailyUsageRepository
@@ -93,8 +97,10 @@ public class UsageTrackingService {
 
         int limit = subscription.getPlanType() == UserSubscription.PlanType.PREMIUM ? PREMIUM_PLAN_LIMIT
                 : FREE_PLAN_LIMIT;
-
         int usedCount = dailyUsage != null ? dailyUsage.getUsageCount() : 0;
+
+        log.info("사용량 계산: 제한={}, 사용량={}, 남은량={}", limit, usedCount, limit - usedCount);
+
         return limit - usedCount;
     }
 

@@ -93,7 +93,8 @@ public class SecurityConfig {
                                 "/api/v1/places/**",
                                 "/api/v1/schedules/**",
                                 "/api/v1/routes/**",
-                                "/api/v1/navigation/**")
+                                "/api/v1/navigation/**",
+                                "/api/v1/usage/**")
                         .permitAll()
                         .requestMatchers("/api/v1/users/me").authenticated()
                         .anyRequest().authenticated())
