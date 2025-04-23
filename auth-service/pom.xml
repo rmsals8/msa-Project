@@ -36,11 +36,11 @@
         <artifactId>common</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </dependency>
-		<dependency>
+		<!-- <dependency>
         <groupId>com.example</groupId>
         <artifactId>schedule-service</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-    </dependency>
+    </dependency> -->
 		<dependency>
 		<groupId>org.springdoc</groupId>
 		<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

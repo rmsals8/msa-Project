@@ -11,7 +11,7 @@ public class SaveScheduleRequest {
     private List<OptimizedScheduleDTO> optimizedSchedules;
     private List<RouteSegmentDTO> segments;
     private RouteMetricsDTO metrics;
-    
+
     @Data
     public static class OptimizedScheduleDTO {
         private String name;
@@ -22,14 +22,14 @@ public class SaveScheduleRequest {
         private Integer priority;
         private Integer duration;
     }
-    
+
     @Data
     public static class LocationDTO {
         private Double latitude;
         private Double longitude;
         private String name;
     }
-    
+
     @Data
     public static class RouteSegmentDTO {
         private String fromLocation;
@@ -38,7 +38,7 @@ public class SaveScheduleRequest {
         private Integer duration;
         private String transportMode;
     }
-    
+
     @Data
     public static class RouteMetricsDTO {
         private Double totalDistance;

@@ -2,13 +2,14 @@ server:
   port: 8081
 
 spring:
-
   main:
     web-application-type: reactive
   application:
     name: api-gateway
   cloud:
     gateway:
+      default-filters:
+        - AuthenticationFilter
       discovery:
         locator:
           enabled: true
@@ -17,19 +18,31 @@ spring:
         - id: auth-service
           uri: lb://auth-service
           predicates:
-            - Path=/api/v1/auth/**
+            - Path=/api/v1/auth/**, /api/v1/users/**, /api/v1/usage/**
+          filters:
+            - PreserveHostHeader
         - id: navigation-service
           uri: lb://navigation-service
           predicates:
-            - Path=/api/v1/navigation/**
+            - Path=/api/v1/navigation/**, /ws-navigation/**
+          filters:
+            - PreserveHostHeader
         - id: place-service
           uri: lb://place-service
           predicates:
-            - Path=/api/v1/places/**
+            - Path=/api/v1/places/**, /api/v1/visit-histories/**
+          filters:
+            - PreserveHostHeader
         - id: schedule-service
           uri: lb://schedule-service
           predicates:
-            - Path=/api/v1/schedules/**
+            - Path=/api/v1/schedules/**, /api/v1/routes/**
+          filters:
+            - PreserveHostHeader
+
+app:
+  jwt:
+    secret: ${JWT_SECRET_KEY:defaultSecretKeyForDevelopmentPurposesOnlyDoNotUseInProduction}
 
 eureka:
   client:
@@ -48,8 +61,3 @@ management:
   endpoint:
     health:
       show-details: ALWAYS
-
-logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.security: DEBUG

@@ -18,7 +18,7 @@ public class SavedScheduleResponse {
     private Double totalCost;
     private List<ScheduleItemResponse> scheduleItems;
     private List<SegmentResponse> segments;
-    
+
     @Data
     @Builder
     public static class ScheduleItemResponse {
@@ -28,7 +28,7 @@ public class SavedScheduleResponse {
         private LocalDateTime endTime;
         private String type;
     }
-    
+
     @Data
     @Builder
     public static class SegmentResponse {
