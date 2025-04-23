@@ -9,6 +9,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import com.example.auth_service.domain.User;
+
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Base64;
@@ -47,10 +49,56 @@ public class JwtTokenProvider {
         return new SecretKeySpec(keyBytes, SignatureAlgorithm.HS512.getJcaName());
     }
 
+    // public String createToken(Authentication authentication) {
+    // String authorities = authentication.getAuthorities().stream()
+    // .map(GrantedAuthority::getAuthority)
+    // .collect(Collectors.joining(","));
+
+    // long now = (new Date()).getTime();
+    // Date validity = new Date(now + this.getTokenValidityInMilliseconds());
+
+    // Key signingKey = getSigningKey();
+
+    // return Jwts.builder()
+    // .setSubject(authentication.getName())
+    // .claim("auth", authorities)
+    // .setExpiration(validity)
+    // .signWith(signingKey, SignatureAlgorithm.HS512)
+    // .compact();
+    // }
+
+    // public String createToken(String username) {
+    // Claims claims = Jwts.claims().setSubject(username);
+    // Date now = new Date();
+    // Date validity = new Date(now.getTime() +
+    // this.getTokenValidityInMilliseconds());
+
+    // Key signingKey = getSigningKey();
+
+    // return Jwts.builder()
+    // .setClaims(claims)
+    // .setIssuedAt(now)
+    // .setExpiration(validity)
+    // .signWith(signingKey, SignatureAlgorithm.HS512)
+    // .compact();
+    // }
     public String createToken(Authentication authentication) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
+
+        // UserPrincipal 대신 User로 처리하거나 조건부 처리
+        Long userId = null;
+        if (authentication.getPrincipal() instanceof UserPrincipal) {
+            userId = ((UserPrincipal) authentication.getPrincipal()).getId();
+        } else {
+            // 사용자 이메일로 사용자 ID 조회
+            String email = authentication.getName();
+            User user = userDetailsService.getUserByEmail(email);
+            if (user != null) {
+                userId = user.getUserNo();
+            }
+        }
 
         long now = (new Date()).getTime();
         Date validity = new Date(now + this.getTokenValidityInMilliseconds());
@@ -60,6 +108,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authorities)
+                .claim("userId", userId) // 사용자 ID 추가
                 .setExpiration(validity)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
@@ -67,6 +116,13 @@ public class JwtTokenProvider {
 
     public String createToken(String username) {
         Claims claims = Jwts.claims().setSubject(username);
+
+        // 사용자 ID를 DB에서 조회
+        User user = userDetailsService.getUserByEmail(username); // 이 메서드는 별도로 구현 필요
+        if (user != null) {
+            claims.put("userId", user.getUserNo()); // 사용자 ID 추가
+        }
+
         Date now = new Date();
         Date validity = new Date(now.getTime() + this.getTokenValidityInMilliseconds());
 
@@ -80,8 +136,30 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    // public String createRefreshToken(String username) {
+    // Claims claims = Jwts.claims().setSubject(username);
+    // Date now = new Date();
+    // Date validity = new Date(now.getTime() +
+    // this.getRefreshTokenValidityInMilliseconds());
+
+    // Key signingKey = getSigningKey();
+
+    // return Jwts.builder()
+    // .setClaims(claims)
+    // .setIssuedAt(now)
+    // .setExpiration(validity)
+    // .signWith(signingKey, SignatureAlgorithm.HS512)
+    // .compact();
+    // }
     public String createRefreshToken(String username) {
         Claims claims = Jwts.claims().setSubject(username);
+
+        // 사용자 ID를 DB에서 조회
+        User user = userDetailsService.getUserByEmail(username); // 이 메서드는 별도로 구현 필요
+        if (user != null) {
+            claims.put("userId", user.getUserNo()); // 사용자 ID 추가
+        }
+
         Date now = new Date();
         Date validity = new Date(now.getTime() + this.getRefreshTokenValidityInMilliseconds());
 
@@ -172,11 +250,35 @@ public class JwtTokenProvider {
         return refreshTokenValidityInSeconds * 1000;
     }
 
+    // public String createSocialLoginToken(String email) {
+    // Claims claims = Jwts.claims().setSubject(email);
+
+    // // 소셜 로그인 사용자를 위한 기본 권한 추가
+    // claims.put("auth", "ROLE_USER");
+
+    // Date now = new Date();
+    // Date validity = new Date(now.getTime() + getTokenValidityInMilliseconds());
+
+    // Key signingKey = getSigningKey();
+
+    // return Jwts.builder()
+    // .setClaims(claims)
+    // .setIssuedAt(now)
+    // .setExpiration(validity)
+    // .signWith(signingKey, SignatureAlgorithm.HS512)
+    // .compact();
+    // }
     public String createSocialLoginToken(String email) {
         Claims claims = Jwts.claims().setSubject(email);
 
         // 소셜 로그인 사용자를 위한 기본 권한 추가
         claims.put("auth", "ROLE_USER");
+
+        // 사용자 ID를 DB에서 조회
+        User user = userDetailsService.getUserByEmail(email); // 이 메서드는 별도로 구현 필요
+        if (user != null) {
+            claims.put("userId", user.getUserNo()); // 사용자 ID 추가
+        }
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + getTokenValidityInMilliseconds());
@@ -189,5 +291,16 @@ public class JwtTokenProvider {
                 .setExpiration(validity)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
+    }
+
+    public Long getUserId(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        // userId 클레임이 있는지 확인하고 반환
+        return claims.get("userId", Long.class);
     }
 }

@@ -39,282 +39,285 @@ import java.util.concurrent.TimeUnit;
 @Transactional
 @Slf4j
 public class AuthService {
-    private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
-    private final PasswordRepository passwordRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final LogRepository logRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider tokenProvider;
-    private final RedisTemplate<String, String> redisTemplate;
+        private final AuthenticationManager authenticationManager;
+        private final UserRepository userRepository;
+        private final PasswordRepository passwordRepository;
+        private final RefreshTokenRepository refreshTokenRepository;
+        private final LogRepository logRepository;
+        private final PasswordEncoder passwordEncoder;
+        private final JwtTokenProvider tokenProvider;
+        private final RedisTemplate<String, String> redisTemplate;
 
-    // 회원가입 성공 후 토큰 생성만 (로그인 시도 없이)
-    private AuthResponse createAuthResponse(User user) {
-        String accessToken = tokenProvider.createToken(user.getEmail());
-        String refreshToken = tokenProvider.createRefreshToken(user.getEmail());
+        // 회원가입 성공 후 토큰 생성만 (로그인 시도 없이)
+        private AuthResponse createAuthResponse(User user) {
+                String accessToken = tokenProvider.createToken(user.getEmail());
+                String refreshToken = tokenProvider.createRefreshToken(user.getEmail());
 
-        // RefreshToken 저장
-        RefreshToken refreshTokenEntity = RefreshToken.builder()
-                .user(user)
-                .refreshToken(refreshToken)
-                .build();
-        refreshTokenRepository.save(refreshTokenEntity);
+                // RefreshToken 저장
+                RefreshToken refreshTokenEntity = RefreshToken.builder()
+                                .user(user)
+                                .refreshToken(refreshToken)
+                                .build();
+                refreshTokenRepository.save(refreshTokenEntity);
 
-        // Redis에도 저장
-        redisTemplate.opsForValue().set(
-                "RT:" + refreshToken,
-                user.getEmail(),
-                tokenProvider.getRefreshTokenValidityInMilliseconds(),
-                TimeUnit.MILLISECONDS);
+                // Redis에도 저장
+                redisTemplate.opsForValue().set(
+                                "RT:" + refreshToken,
+                                user.getEmail(),
+                                tokenProvider.getRefreshTokenValidityInMilliseconds(),
+                                TimeUnit.MILLISECONDS);
 
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .tokenType("Bearer")
-                .expiresIn(tokenProvider.getTokenValidityInMilliseconds())
-                .userProfile(createUserProfile(user))
-                .isSuccess(true)
-                .build();
-    }
-
-    // 솔트 생성 함수 추가
-    private String generateSalt() {
-        SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[16];
-        random.nextBytes(salt);
-        return Base64.getEncoder().encodeToString(salt);
-    }
-
-    public AuthResponse login(LoginRequest request) {
-        return authenticateUser(request.getEmail(), request.getPassword());
-    }
-
-    public AuthResponse refresh(TokenRefreshRequest request) {
-        // Redis에서 리프레시 토큰 검증
-        String savedToken = redisTemplate.opsForValue().get("RT:" + request.getRefreshToken());
-        if (savedToken == null) {
-            throw new BadRequestException("Invalid refresh token");
+                return AuthResponse.builder()
+                                .accessToken(accessToken)
+                                .refreshToken(refreshToken)
+                                .tokenType("Bearer")
+                                .expiresIn(tokenProvider.getTokenValidityInMilliseconds())
+                                .userProfile(createUserProfile(user))
+                                .isSuccess(true)
+                                .build();
         }
 
-        // 토큰에서 사용자 정보 추출
-        String username = tokenProvider.getUsername(request.getRefreshToken());
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", username));
-
-        // 새 토큰 생성
-        String newAccessToken = tokenProvider.createToken(username);
-        String newRefreshToken = tokenProvider.createRefreshToken(username);
-
-        // Redis 업데이트
-        redisTemplate.delete("RT:" + request.getRefreshToken());
-        redisTemplate.opsForValue().set(
-                "RT:" + newRefreshToken,
-                username,
-                tokenProvider.getRefreshTokenValidityInMilliseconds(),
-                TimeUnit.MILLISECONDS);
-
-        // RefreshToken 테이블 업데이트
-        RefreshToken refreshTokenEntity = refreshTokenRepository.findByUserNo(user.getUserNo())
-                .orElse(RefreshToken.builder()
-                        .user(user)
-                        .build());
-
-        refreshTokenEntity.setRefreshToken(newRefreshToken);
-        refreshTokenRepository.save(refreshTokenEntity);
-
-        // 토큰 갱신 로그 기록
-        saveLog(user.getUserNo(), "TOKEN_REFRESH", "토큰 갱신 성공",
-                "127.0.0.1", "Unknown");
-
-        return AuthResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .tokenType("Bearer")
-                .expiresIn(tokenProvider.getTokenValidityInMilliseconds())
-                .userProfile(createUserProfile(user))
-                .build();
-    }
-
-    public void logout(String accessToken, String refreshToken) {
-        try {
-            // Access Token 블랙리스트에 추가
-            long expiration = tokenProvider.getExpirationFromToken(accessToken);
-            redisTemplate.opsForValue().set(
-                    "BL:" + accessToken,
-                    "logout",
-                    expiration,
-                    TimeUnit.MILLISECONDS);
-
-            // Refresh Token 삭제
-            redisTemplate.delete("RT:" + refreshToken);
-
-            // 사용자 ID 추출
-            String username = tokenProvider.getUsername(accessToken);
-            User user = userRepository.findByEmail(username).orElse(null);
-
-            if (user != null) {
-                // RefreshToken 테이블에서도 삭제
-                refreshTokenRepository.deleteByUser_UserNo(user.getUserNo());
-
-                // 로그아웃 로그 기록
-                saveLog(user.getUserNo(), "LOGOUT", "로그아웃 성공",
-                        "127.0.0.1", "Unknown");
-            }
-        } catch (Exception e) {
-            log.error("로그아웃 처리 중 오류 발생", e);
-        }
-    }
-
-    private AuthResponse authenticateUser(String email, String password) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password));
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
-
-            String accessToken = tokenProvider.createToken(authentication);
-            String refreshToken = tokenProvider.createRefreshToken(authentication.getName());
-
-            // Refresh Token을 Redis에 저장
-            redisTemplate.opsForValue().set(
-                    "RT:" + refreshToken,
-                    authentication.getName(),
-                    tokenProvider.getRefreshTokenValidityInMilliseconds(),
-                    TimeUnit.MILLISECONDS);
-
-            // RefreshToken 테이블에도 저장
-            RefreshToken refreshTokenEntity = refreshTokenRepository.findByUserNo(user.getUserNo())
-                    .orElse(RefreshToken.builder()
-                            .user(user)
-                            .build());
-
-            refreshTokenEntity.setRefreshToken(refreshToken);
-            refreshTokenRepository.save(refreshTokenEntity);
-
-            // 로그인 시간 업데이트는 로그 테이블에 기록으로 대체
-            saveLog(user.getUserNo(), "LOGIN_SUCCESS", "로그인 성공: " + email,
-                    "127.0.0.1", "Unknown");
-
-            return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .tokenType("Bearer")
-                    .expiresIn(tokenProvider.getTokenValidityInMilliseconds())
-                    .userProfile(createUserProfile(user))
-                    .isSuccess(true)
-                    .build();
-        } catch (Exception e) {
-            log.error("로그인 실패: {}", email, e);
-            // 로그인 실패 로그 기록
-            User user = userRepository.findByEmail(email).orElse(null);
-            if (user != null) {
-                saveLog(user.getUserNo(), "LOGIN_FAIL", "로그인 실패: " + e.getMessage(),
-                        "127.0.0.1", "Unknown");
-            } else {
-                saveLog(null, "LOGIN_FAIL", "존재하지 않는 이메일로 로그인 시도: " + email,
-                        "127.0.0.1", "Unknown");
-            }
-            throw e;
-        }
-    }
-
-    // UserProfile 생성 메서드
-    private UserProfile createUserProfile(User user) {
-        return UserProfile.builder()
-                .id(user.getUserNo())
-                .email(user.getEmail())
-                .name(user.getUsername())
-                // 전화번호, 프로필 이미지, 제공자, 역할 등은 기존 코드에 있었지만 새 구조에서는 없을 수 있음
-                // 필요시 SocialLogin 테이블이나 다른 테이블에서 추가 정보를 가져올 수 있음
-                .build();
-    }
-
-// 로그 저장 메서드
-private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
-        // userNo로 User 객체 조회 (userNo가 null일 수 있으므로 조건부 처리)
-        User user = null;
-        if (userNo != null) {
-            user = userRepository.findById(userNo).orElse(null);
-        }
-        
-        Log log = Log.builder()
-                .user(user)  // User 객체 전달
-                .actionType(actionType)
-                .description(description)
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
-                .status("COMPLETED")
-                .createdAt(LocalDateTime.now())
-                .build();
-        
-        logRepository.save(log);
-    }
-
-    // 새 의존성 추가
-    private final EmailVerificationService emailVerificationService;
-
-    @Transactional
-    public AuthResponse completeSignup(CompleteSignupRequest request) {
-        // 이메일 중복 체크
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BadRequestException("이미 사용중인 이메일입니다.");
+        // 솔트 생성 함수 추가
+        private String generateSalt() {
+                SecureRandom random = new SecureRandom();
+                byte[] salt = new byte[16];
+                random.nextBytes(salt);
+                return Base64.getEncoder().encodeToString(salt);
         }
 
-        // 인증 토큰 검증
-        boolean isTokenValid = emailVerificationService.validateVerificationToken(
-                request.getEmail(), request.getVerificationToken());
-
-        if (!isTokenValid) {
-            throw new BadRequestException("유효하지 않은 인증 토큰입니다. 이메일 인증을 다시 진행해주세요.");
+        public AuthResponse login(LoginRequest request) {
+                return authenticateUser(request.getEmail(), request.getPassword());
         }
 
-        // 사용자 생성
-        User user = User.builder()
-                .userName(request.getName())
-                .email(request.getEmail())
-                .loginType(0) // 일반 로그인은 0
-                .build();
+        public AuthResponse refresh(TokenRefreshRequest request) {
+                // Redis에서 리프레시 토큰 검증
+                String savedToken = redisTemplate.opsForValue().get("RT:" + request.getRefreshToken());
+                if (savedToken == null) {
+                        throw new BadRequestException("Invalid refresh token");
+                }
 
-        // 로그 추가
-        log.info("약관 동의 정보: termsAgreed={}, marketingAgreed={}",
-                request.isTermsAgreed(), request.isMarketingAgreed());
+                // 토큰에서 사용자 정보 추출
+                String username = tokenProvider.getUsername(request.getRefreshToken());
+                User user = userRepository.findByEmail(username)
+                                .orElseThrow(() -> new ResourceNotFoundException("User", "email", username));
 
-        // 약관 동의 정보 생성
-        UserAgreement userAgreement = UserAgreement.builder()
-                .user(user)
-                .termsAgreed(request.isTermsAgreed())
-                .marketingAgreed(request.isMarketingAgreed())
-                .createdAt(LocalDateTime.now())
-                .build();
+                // 새 토큰 생성
+                String newAccessToken = tokenProvider.createToken(username);
+                String newRefreshToken = tokenProvider.createRefreshToken(username);
 
-        // 사용자와 약관 동의 정보 연결
-        user.setUserAgreement(userAgreement);
+                // Redis 업데이트
+                redisTemplate.delete("RT:" + request.getRefreshToken());
+                redisTemplate.opsForValue().set(
+                                "RT:" + newRefreshToken,
+                                username,
+                                tokenProvider.getRefreshTokenValidityInMilliseconds(),
+                                TimeUnit.MILLISECONDS);
 
-        // 사용자 저장 (cascade로 인해 userAgreement도 함께 저장됨)
-        User savedUser = userRepository.save(user);
+                // RefreshToken 테이블 업데이트
+                RefreshToken refreshTokenEntity = refreshTokenRepository.findByUserNo(user.getUserNo())
+                                .orElse(RefreshToken.builder()
+                                                .user(user)
+                                                .build());
 
-        // 비밀번호 저장
-        String salt = generateSalt();
-        Password password = Password.builder()
-                .user(user)
-                .salt(salt)
-                .password(passwordEncoder.encode(request.getPassword()))
-                .updateDate(LocalDateTime.now())
-                .build();
+                refreshTokenEntity.setRefreshToken(newRefreshToken);
+                refreshTokenRepository.save(refreshTokenEntity);
 
-        passwordRepository.save(password);
+                // 토큰 갱신 로그 기록
+                saveLog(user.getUserNo(), "TOKEN_REFRESH", "토큰 갱신 성공",
+                                "127.0.0.1", "Unknown");
 
-        // 회원가입 로그 기록
-        saveLog(savedUser.getUserNo(), "SIGNUP", "회원가입 성공: " + request.getEmail(),
-                "127.0.0.1", "Unknown");
+                return AuthResponse.builder()
+                                .accessToken(newAccessToken)
+                                .refreshToken(newRefreshToken)
+                                .tokenType("Bearer")
+                                .expiresIn(tokenProvider.getTokenValidityInMilliseconds())
+                                .userProfile(createUserProfile(user))
+                                .build();
+        }
 
-        // 약관 동의 정보 저장 직전에 로그 추가
-        log.info("약관 동의 정보 저장: userNo={}, termsAgreed={}, marketingAgreed={}",
-                savedUser.getUserNo(), request.isTermsAgreed(), request.isMarketingAgreed());
-        // 자동 로그인을 시도하지 않고 성공 응답만 반환
-        return createAuthResponse(savedUser);
-    }
+        public void logout(String accessToken, String refreshToken) {
+                try {
+                        // Access Token 블랙리스트에 추가
+                        long expiration = tokenProvider.getExpirationFromToken(accessToken);
+                        redisTemplate.opsForValue().set(
+                                        "BL:" + accessToken,
+                                        "logout",
+                                        expiration,
+                                        TimeUnit.MILLISECONDS);
+
+                        // Refresh Token 삭제
+                        redisTemplate.delete("RT:" + refreshToken);
+
+                        // 사용자 ID 추출
+                        String username = tokenProvider.getUsername(accessToken);
+                        User user = userRepository.findByEmail(username).orElse(null);
+
+                        if (user != null) {
+                                // RefreshToken 테이블에서도 삭제
+                                refreshTokenRepository.deleteByUser_UserNo(user.getUserNo());
+
+                                // 로그아웃 로그 기록
+                                saveLog(user.getUserNo(), "LOGOUT", "로그아웃 성공",
+                                                "127.0.0.1", "Unknown");
+                        }
+                } catch (Exception e) {
+                        log.error("로그아웃 처리 중 오류 발생", e);
+                }
+        }
+
+        private AuthResponse authenticateUser(String email, String password) {
+                try {
+                        Authentication authentication = authenticationManager.authenticate(
+                                        new UsernamePasswordAuthenticationToken(email, password));
+
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                        User user = userRepository.findByEmail(email)
+                                        .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+                        String accessToken = tokenProvider.createToken(authentication);
+                        String refreshToken = tokenProvider.createRefreshToken(authentication.getName());
+
+                        // Refresh Token을 Redis에 저장
+                        redisTemplate.opsForValue().set(
+                                        "RT:" + refreshToken,
+                                        authentication.getName(),
+                                        tokenProvider.getRefreshTokenValidityInMilliseconds(),
+                                        TimeUnit.MILLISECONDS);
+
+                        // RefreshToken 테이블에도 저장
+                        RefreshToken refreshTokenEntity = refreshTokenRepository.findByUserNo(user.getUserNo())
+                                        .orElse(RefreshToken.builder()
+                                                        .user(user)
+                                                        .build());
+
+                        refreshTokenEntity.setRefreshToken(refreshToken);
+                        refreshTokenRepository.save(refreshTokenEntity);
+
+                        // 로그인 시간 업데이트는 로그 테이블에 기록으로 대체
+                        saveLog(user.getUserNo(), "LOGIN_SUCCESS", "로그인 성공: " + email,
+                                        "127.0.0.1", "Unknown");
+
+                        return AuthResponse.builder()
+                                        .accessToken(accessToken)
+                                        .refreshToken(refreshToken)
+                                        .tokenType("Bearer")
+                                        .expiresIn(tokenProvider.getTokenValidityInMilliseconds())
+                                        .userProfile(createUserProfile(user))
+                                        .isSuccess(true)
+                                        .build();
+                } catch (Exception e) {
+                        log.error("로그인 실패: {}", email, e);
+                        // 로그인 실패 로그 기록
+                        User user = userRepository.findByEmail(email).orElse(null);
+                        if (user != null) {
+                                saveLog(user.getUserNo(), "LOGIN_FAIL", "로그인 실패: " + e.getMessage(),
+                                                "127.0.0.1", "Unknown");
+                        } else {
+                                saveLog(null, "LOGIN_FAIL", "존재하지 않는 이메일로 로그인 시도: " + email,
+                                                "127.0.0.1", "Unknown");
+                        }
+                        throw e;
+                }
+        }
+
+        // UserProfile 생성 메서드
+        private UserProfile createUserProfile(User user) {
+                return UserProfile.builder()
+                                .id(user.getUserNo())
+                                .email(user.getEmail())
+                                .name(user.getUsername())
+                                // 전화번호, 프로필 이미지, 제공자, 역할 등은 기존 코드에 있었지만 새 구조에서는 없을 수 있음
+                                // 필요시 SocialLogin 테이블이나 다른 테이블에서 추가 정보를 가져올 수 있음
+                                .build();
+        }
+
+        // 로그 저장 메서드
+        private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
+                // userNo로 User 객체 조회 (userNo가 null일 수 있으므로 조건부 처리)
+                if (description != null && description.length() > 255) {
+                        description = description.substring(0, 252) + "...";
+                }
+                User user = null;
+                if (userNo != null) {
+                        user = userRepository.findById(userNo).orElse(null);
+                }
+
+                Log log = Log.builder()
+                                .user(user) // User 객체 전달
+                                .actionType(actionType)
+                                .description(description)
+                                .ipAddress(ipAddress)
+                                .userAgent(userAgent)
+                                .status("COMPLETED")
+                                .createdAt(LocalDateTime.now())
+                                .build();
+
+                logRepository.save(log);
+        }
+
+        // 새 의존성 추가
+        private final EmailVerificationService emailVerificationService;
+
+        @Transactional
+        public AuthResponse completeSignup(CompleteSignupRequest request) {
+                // 이메일 중복 체크
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        throw new BadRequestException("이미 사용중인 이메일입니다.");
+                }
+
+                // 인증 토큰 검증
+                boolean isTokenValid = emailVerificationService.validateVerificationToken(
+                                request.getEmail(), request.getVerificationToken());
+
+                if (!isTokenValid) {
+                        throw new BadRequestException("유효하지 않은 인증 토큰입니다. 이메일 인증을 다시 진행해주세요.");
+                }
+
+                // 사용자 생성
+                User user = User.builder()
+                                .userName(request.getName())
+                                .email(request.getEmail())
+                                .loginType(0) // 일반 로그인은 0
+                                .build();
+
+                // 로그 추가
+                log.info("약관 동의 정보: termsAgreed={}, marketingAgreed={}",
+                                request.isTermsAgreed(), request.isMarketingAgreed());
+
+                // 약관 동의 정보 생성
+                UserAgreement userAgreement = UserAgreement.builder()
+                                .user(user)
+                                .termsAgreed(request.isTermsAgreed())
+                                .marketingAgreed(request.isMarketingAgreed())
+                                .createdAt(LocalDateTime.now())
+                                .build();
+
+                // 사용자와 약관 동의 정보 연결
+                user.setUserAgreement(userAgreement);
+
+                // 사용자 저장 (cascade로 인해 userAgreement도 함께 저장됨)
+                User savedUser = userRepository.save(user);
+
+                // 비밀번호 저장
+                String salt = generateSalt();
+                Password password = Password.builder()
+                                .user(user)
+                                .salt(salt)
+                                .password(passwordEncoder.encode(request.getPassword()))
+                                .updateDate(LocalDateTime.now())
+                                .build();
+
+                passwordRepository.save(password);
+
+                // 회원가입 로그 기록
+                saveLog(savedUser.getUserNo(), "SIGNUP", "회원가입 성공: " + request.getEmail(),
+                                "127.0.0.1", "Unknown");
+
+                // 약관 동의 정보 저장 직전에 로그 추가
+                log.info("약관 동의 정보 저장: userNo={}, termsAgreed={}, marketingAgreed={}",
+                                savedUser.getUserNo(), request.isTermsAgreed(), request.isMarketingAgreed());
+                // 자동 로그인을 시도하지 않고 성공 응답만 반환
+                return createAuthResponse(savedUser);
+        }
 }

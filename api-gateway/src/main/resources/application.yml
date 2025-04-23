@@ -36,8 +36,7 @@ spring:
         - id: schedule-service
           uri: lb://schedule-service
           predicates:
-                - Path=/api/v1/schedules/**
-                - Path=/api/v1/routes/**
+            - Path=/api/v1/schedules/**, /api/v1/routes/**
           filters:
               - PreserveHostHeader
 
@@ -68,3 +67,7 @@ logging:
     com.example.api_gateway: DEBUG
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
+    reactor.netty.http.client: DEBUG
+
+
+    

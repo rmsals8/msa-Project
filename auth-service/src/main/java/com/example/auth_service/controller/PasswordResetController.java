@@ -1,6 +1,6 @@
 package com.example.auth_service.controller;
 
-import com.example.common.response.ApiResponse;
+import com.example.auth_service.dto.response.ApiResponse;
 import com.example.auth_service.dto.request.auth.PasswordResetRequest;
 import com.example.auth_service.dto.request.auth.PasswordUpdateRequest;
 import com.example.auth_service.dto.request.auth.VerifyResetCodeRequest;

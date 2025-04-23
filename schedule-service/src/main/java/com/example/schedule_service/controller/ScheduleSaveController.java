@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Base64;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,27 +28,18 @@ import lombok.extern.slf4j.Slf4j;
 public class ScheduleSaveController {
 
     private final ScheduleSaveService scheduleSaveService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> saveSchedule(
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody SaveScheduleRequest request) {
 
         log.info("Schedule save request received: {}", request);
 
-        // X-User-Id 헤더가 없는 경우를 대비한 예외 처리
-        Long userId;
-        try {
-            // API Gateway에서 전달한 사용자 ID 파싱
-            userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
-
-            if (userId == null) {
-                log.warn("User ID is missing from request headers");
-                return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
-            }
-        } catch (NumberFormatException e) {
-            log.error("Invalid user ID format: {}", userIdHeader);
-            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 사용자 ID 형식입니다.");
+        Long userId = extractUserIdFromToken(authHeader);
+        if (userId == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
 
         try {
@@ -63,21 +57,12 @@ public class ScheduleSaveController {
 
     @GetMapping("/{scheduleId}")
     public ResponseEntity<Map<String, Object>> getSchedule(
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long scheduleId) {
 
-        // X-User-Id 헤더가 없는 경우를 대비한 예외 처리
-        Long userId;
-        try {
-            userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
-
-            if (userId == null) {
-                log.warn("User ID is missing from request headers");
-                return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
-            }
-        } catch (NumberFormatException e) {
-            log.error("Invalid user ID format: {}", userIdHeader);
-            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 사용자 ID 형식입니다.");
+        Long userId = extractUserIdFromToken(authHeader);
+        if (userId == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
 
         log.info("Schedule retrieval request for user {} and schedule {}", userId, scheduleId);
@@ -101,20 +86,12 @@ public class ScheduleSaveController {
 
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<Map<String, Object>> deleteSchedule(
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long scheduleId) {
 
-        Long userId;
-        try {
-            userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
-
-            if (userId == null) {
-                log.warn("User ID is missing from request headers");
-                return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
-            }
-        } catch (NumberFormatException e) {
-            log.error("Invalid user ID format: {}", userIdHeader);
-            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 사용자 ID 형식입니다.");
+        Long userId = extractUserIdFromToken(authHeader);
+        if (userId == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
 
         log.info("Schedule deletion request for user {} and schedule {}", userId, scheduleId);
@@ -133,19 +110,11 @@ public class ScheduleSaveController {
 
     @GetMapping("/user")
     public ResponseEntity<Map<String, Object>> getUserSchedules(
-            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader) {
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
-        Long userId;
-        try {
-            userId = userIdHeader != null ? Long.parseLong(userIdHeader) : null;
-
-            if (userId == null) {
-                log.warn("User ID is missing from request headers");
-                return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
-            }
-        } catch (NumberFormatException e) {
-            log.error("Invalid user ID format: {}", userIdHeader);
-            return createErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 사용자 ID 형식입니다.");
+        Long userId = extractUserIdFromToken(authHeader);
+        if (userId == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
 
         log.info("User schedules retrieval request for user {}", userId);
@@ -156,6 +125,42 @@ public class ScheduleSaveController {
         } catch (Exception e) {
             log.error("Failed to retrieve user schedules", e);
             return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "사용자 일정 조회 중 오류가 발생했습니다.");
+        }
+    }
+
+    // JWT 토큰에서 사용자 ID 추출하는 메소드
+    private Long extractUserIdFromToken(String authHeader) {
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return null;
+            }
+
+            // Bearer 접두사 제거
+            String token = authHeader.substring(7);
+
+            // JWT 토큰 파싱 (헤더.페이로드.서명 구조)
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                log.error("Invalid token format");
+                return null;
+            }
+
+            // Base64 디코딩하여 payload(claims) 가져오기
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+
+            // JSON으로 파싱
+            JsonNode payloadJson = objectMapper.readTree(payload);
+
+            // userId claim 추출
+            if (payloadJson.has("userId")) {
+                return payloadJson.get("userId").asLong();
+            } else {
+                log.warn("userId claim not found in token");
+                return null;
+            }
+        } catch (Exception e) {
+            log.error("Failed to extract userId from token", e);
+            return null;
         }
     }
 

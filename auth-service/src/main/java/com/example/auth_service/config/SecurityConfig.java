@@ -94,7 +94,7 @@ public class SecurityConfig {
                                 "/api/v1/schedules/**",
                                 "/api/v1/routes/**",
                                 "/api/v1/navigation/**",
-                                "/api/v1/usage/**","/api/v1/schedules/save", "/api/v1/schedules/saved/**")
+                                "/api/v1/usage/**", "/api/v1/schedules/save", "/api/v1/schedules/saved/**")
                         .permitAll()
                         .requestMatchers("/api/v1/users/me").authenticated()
                         .anyRequest().authenticated())

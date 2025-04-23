@@ -31,11 +31,11 @@
 		<spring-cloud.version>2024.0.1</spring-cloud.version>
 	</properties>
 	<dependencies>
-	<dependency>
+	<!-- <dependency>
         <groupId>com.example</groupId>
         <artifactId>common</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-    </dependency>
+    </dependency> -->
 		<!-- <dependency>
         <groupId>com.example</groupId>
         <artifactId>schedule-service</artifactId>

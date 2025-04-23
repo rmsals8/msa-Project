@@ -19,23 +19,31 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
-    private final PasswordRepository passwordRepository;
+        private final UserRepository userRepository;
+        private final PasswordRepository passwordRepository;
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email : " + email));
+        @Transactional(readOnly = true)
+        public User getUserByEmail(String email) {
+                return userRepository.findByEmail(email)
+                                .orElse(null);
+        }
 
-        // 비밀번호 정보 조회
-        Password passwordEntity = passwordRepository.findByUser_UserNo(user.getUserNo())
-                .orElseThrow(() -> new UsernameNotFoundException("Password not found for user : " + email));
+        @Override
+        @Transactional(readOnly = true)
+        public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new UsernameNotFoundException(
+                                                "User not found with email : " + email));
 
-        // 사용자 정보와 비밀번호 정보를 함께 전달
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                passwordEntity.getPassword(), // 암호화된 비밀번호
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
-    }
+                // 비밀번호 정보 조회
+                Password passwordEntity = passwordRepository.findByUser_UserNo(user.getUserNo())
+                                .orElseThrow(() -> new UsernameNotFoundException(
+                                                "Password not found for user : " + email));
+
+                // 사용자 정보와 비밀번호 정보를 함께 전달
+                return new org.springframework.security.core.userdetails.User(
+                                user.getEmail(),
+                                passwordEntity.getPassword(), // 암호화된 비밀번호
+                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        }
 }
