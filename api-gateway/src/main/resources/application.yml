@@ -36,13 +36,14 @@ spring:
         - id: schedule-service
           uri: lb://schedule-service
           predicates:
-            - Path=/api/v1/schedules/**, /api/v1/routes/**
+                - Path=/api/v1/schedules/**
+                - Path=/api/v1/routes/**
           filters:
-            - PreserveHostHeader
+              - PreserveHostHeader
 
 app:
   jwt:
-    secret: ${JWT_SECRET_KEY:defaultSecretKeyForDevelopmentPurposesOnlyDoNotUseInProduction}
+    secret: ${APP_JWT_SECRET}
 
 eureka:
   client:
@@ -61,3 +62,9 @@ management:
   endpoint:
     health:
       show-details: ALWAYS
+
+logging:
+  level:
+    com.example.api_gateway: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
