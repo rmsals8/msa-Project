@@ -41,6 +41,11 @@
         <artifactId>common</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </dependency>
+	<dependency>
+    <groupId>org.mariadb.jdbc</groupId>
+    <artifactId>mariadb-java-client</artifactId>
+    <version>3.3.1</version> <!-- 최신 버전 확인 가능 -->
+</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>

@@ -1,4 +1,4 @@
-package com.example.common.dto.domain.auth;
+package com.example.auth_service.dto.auth;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

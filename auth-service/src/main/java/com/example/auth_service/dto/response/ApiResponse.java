@@ -1,4 +1,4 @@
-package com.example.common.response;
+package com.example.auth_service.dto.response;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
