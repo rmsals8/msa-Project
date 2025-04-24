@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -58,6 +62,7 @@ public class VisitHistoryController {
         }
     }
 
+    // 기존 방문 기록 조회
     @GetMapping
     public ResponseEntity<Map<String, Object>> getVisitHistories(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -80,6 +85,48 @@ public class VisitHistoryController {
             return createSuccessResponse("방문 기록 조회에 성공했습니다.", histories);
         } catch (Exception e) {
             log.error("Failed to retrieve visit histories", e);
+            return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "방문 기록 조회 중 오류가 발생했습니다.");
+        }
+    }
+
+    // 페이징 처리가 적용된 방문 기록 조회 엔드포인트
+    @GetMapping("/paged")
+    public ResponseEntity<Map<String, Object>> getVisitHistoriesPaged(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Long userId = extractUserIdFromToken(authHeader);
+        if (userId == null) {
+            return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
+        }
+
+        try {
+            // 방문 날짜 내림차순으로 정렬
+            Pageable pageable = PageRequest.of(page, size, Sort.by("visitDate").descending());
+            Page<VisitHistory> historiesPage;
+
+            if (category != null && !category.isBlank()) {
+                historiesPage = visitHistoryService.getVisitHistoriesByCategoryPaged(userId.toString(), category, pageable);
+            } else {
+                historiesPage = visitHistoryService.getVisitHistoriesPaged(userId.toString(), pageable);
+            }
+
+            // 페이징 정보를 포함한 응답 생성
+            Map<String, Object> pageInfo = new HashMap<>();
+            pageInfo.put("content", historiesPage.getContent());
+            pageInfo.put("totalElements", historiesPage.getTotalElements());
+            pageInfo.put("totalPages", historiesPage.getTotalPages());
+            pageInfo.put("currentPage", historiesPage.getNumber());
+            pageInfo.put("pageSize", historiesPage.getSize());
+            pageInfo.put("last", historiesPage.isLast());
+            pageInfo.put("first", historiesPage.isFirst());
+            pageInfo.put("empty", historiesPage.isEmpty());
+
+            return createSuccessResponse("방문 기록 조회에 성공했습니다.", pageInfo);
+        } catch (Exception e) {
+            log.error("Failed to retrieve paged visit histories", e);
             return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "방문 기록 조회 중 오류가 발생했습니다.");
         }
     }

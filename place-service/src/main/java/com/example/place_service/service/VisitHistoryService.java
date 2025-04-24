@@ -1,10 +1,11 @@
-// src/main/java/com/example/TripSpring/service/VisitHistoryService.java
 package com.example.place_service.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,17 +23,14 @@ public class VisitHistoryService {
 
     @Transactional
     public VisitHistory addVisitHistory(VisitHistoryDto dto, String userId) {
-        // 이미 방문한 적이 있는 장소인지 확인
         Optional<VisitHistory> existingVisit = visitHistoryRepository.findByUserIdAndPlaceId(userId, dto.getPlaceId());
 
         if (existingVisit.isPresent()) {
-            // 기존 방문 기록이 있다면 방문 횟수 증가
             VisitHistory history = existingVisit.get();
             history.setVisitCount(history.getVisitCount() + 1);
-            history.setVisitDate(LocalDateTime.now()); // 최근 방문 날짜 업데이트
+            history.setVisitDate(LocalDateTime.now());
             return visitHistoryRepository.save(history);
         } else {
-            // 새로운 방문 기록 생성
             VisitHistory newVisit = VisitHistory.builder()
                     .userId(userId)
                     .placeName(dto.getPlaceName())
@@ -48,6 +46,17 @@ public class VisitHistoryService {
         }
     }
 
+    // 페이징 처리가 적용된 방문 기록 조회 메서드
+    public Page<VisitHistory> getVisitHistoriesPaged(String userId, Pageable pageable) {
+        return visitHistoryRepository.findByUserIdOrderByVisitDateDesc(userId, pageable);
+    }
+
+    // 페이징 처리가 적용된 카테고리별 방문 기록 조회 메서드
+    public Page<VisitHistory> getVisitHistoriesByCategoryPaged(String userId, String category, Pageable pageable) {
+        return visitHistoryRepository.findByUserIdAndCategoryPageable(userId, category, pageable);
+    }
+
+    // 기존 메서드들 유지
     public List<VisitHistory> getVisitHistories(String userId) {
         return visitHistoryRepository.findByUserIdOrderByVisitDateDesc(userId);
     }
