@@ -1,12 +1,13 @@
+// 1. SavedSchedule 엔티티 수정 - 컬렉션 중 하나를 Set으로 변경
 package com.example.schedule_service.domain;
 
 import lombok.*;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet; // Set 사용을 위해 import
 import java.util.ArrayList;
 import java.util.List;
-
-import org.hibernate.annotations.BatchSize;
+import java.util.Set; // Set 사용을 위해 import
 
 @Entity
 @Table(name = "saved_schedules")
@@ -49,12 +50,11 @@ public class SavedSchedule {
     private Double totalCost;
 
     @OneToMany(mappedBy = "savedSchedule", cascade = CascadeType.ALL, orphanRemoval = true)
-    @BatchSize(size = 20) // 이 부분 추가
     @Builder.Default
     private List<SavedScheduleItem> scheduleItems = new ArrayList<>();
 
+    // 컬렉션 타입을 List에서 Set으로 변경
     @OneToMany(mappedBy = "savedSchedule", cascade = CascadeType.ALL, orphanRemoval = true)
-    @BatchSize(size = 20)
     @Builder.Default
-    private List<SavedScheduleSegment> segments = new ArrayList<>();
+    private Set<SavedScheduleSegment> segments = new HashSet<>();
 }

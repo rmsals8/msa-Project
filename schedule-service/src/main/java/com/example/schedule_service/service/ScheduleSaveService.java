@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -107,15 +108,34 @@ public class ScheduleSaveService {
                                 .collect(Collectors.toList());
         }
 
+        @SuppressWarnings("unchecked")
         @Transactional(readOnly = true)
         public SavedScheduleResponse getSavedScheduleDetail(Long scheduleId, Long userNo) {
+                // 일정 기본 정보 로딩
                 SavedSchedule schedule = savedScheduleRepository.findByIdAndUserNo(scheduleId, userNo)
                                 .orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수 없습니다."));
 
-                // 명시적으로 관련 엔티티 초기화
-                Hibernate.initialize(schedule.getScheduleItems());
-                Hibernate.initialize(schedule.getSegments());
+                // 일정 항목과 세그먼트 개별적으로 로딩
+                List<SavedScheduleItem> items = savedScheduleItemRepository
+                                .findBySavedScheduleIdOrderBySequenceNo(schedule.getId());
+                List<SavedScheduleSegment> segments = savedScheduleSegmentRepository
+                                .findBySavedScheduleId(schedule.getId());
 
+                // 객체에 직접 설정 (반드시 getter/setter가 있어야 함)
+                schedule.setScheduleItems(items);
+
+                // segments가 List 타입인 경우:
+                if (schedule.getSegments() instanceof List) {
+                        ((List<SavedScheduleSegment>) schedule.getSegments()).clear();
+                        ((List<SavedScheduleSegment>) schedule.getSegments()).addAll(segments);
+                }
+                // segments가 Set 타입인 경우:
+                else if (schedule.getSegments() instanceof Set) {
+                        schedule.getSegments().clear();
+                        schedule.getSegments().addAll(segments);
+                }
+
+                // 기존 메서드 사용
                 return convertToResponse(schedule);
         }
 
