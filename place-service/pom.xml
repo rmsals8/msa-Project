@@ -46,10 +46,10 @@
     <artifactId>mariadb-java-client</artifactId>
     <version>3.3.1</version> <!-- 최신 버전 확인 가능 -->
 </dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>

@@ -1,7 +1,7 @@
 package com.example.api_gateway.filter;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -38,7 +38,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             "/api/v1/auth/refresh",
             "/api/v1/auth/validate-token",
             "/api/v1/auth/password",
-            "/api/v1/places/**",
+            "/api/v1/places/search",
             "/api/v1/schedules/**",
             "/api/v1/visit-histories");
 
@@ -103,7 +103,15 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     }
 
     private boolean isPathExcluded(String path) {
-        return excludedPaths.stream().anyMatch(path::startsWith);
+        // 더 정확하게 로깅 추가
+        logger.info("Checking path exclusion for: " + path);
+        boolean excluded = excludedPaths.stream().anyMatch(excludedPath -> {
+            boolean matches = path.startsWith(excludedPath);
+            logger.info("Path " + path + " matches " + excludedPath + "? " + matches);
+            return matches;
+        });
+        logger.info("Path " + path + " is excluded? " + excluded);
+        return excluded;
     }
 
     private Claims validateAndExtractClaims(String token) {

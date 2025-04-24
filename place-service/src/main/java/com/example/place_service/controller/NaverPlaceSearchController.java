@@ -26,39 +26,46 @@ public class NaverPlaceSearchController {
     public ResponseEntity<?> searchPlace(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam String query) {
-        
+
+        // 토큰 추출 및 검증 - ScheduleSaveController와 동일한 방식으로
         Long userId = extractUserIdFromToken(authHeader);
         if (userId == null) {
             log.warn("인증되지 않은 사용자가 장소 검색 시도: {}", query);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of(
-                    "status", "ERROR",
-                    "message", "인증 정보가 없습니다."
-                ));
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", HttpStatus.UNAUTHORIZED.value());
+            response.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
+            response.put("message", "인증 정보가 없습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-        
+
         log.info("장소 검색 요청: 사용자 ID={}, 검색어={}", userId, query);
-        
+
         try {
             // 주 API 호출
             Map<String, Object> result = naverPlaceSearchService.searchPlaces(query);
-            
+
             // 실패 시 대체 메서드 호출
             if (result.containsKey("status") && result.get("status").equals("ERROR")) {
                 result = naverPlaceSearchService.searchPlacesAlternative(query);
             }
-            
-            return ResponseEntity.ok(result);
+
+            // ScheduleSaveController와 동일한 응답 형식 사용
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", HttpStatus.OK.value());
+            response.put("message", "장소 검색에 성공했습니다.");
+            response.put("data", result);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("장소 검색 중 오류 발생: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "status", "ERROR",
-                    "message", "검색 중 오류 발생: " + e.getMessage()
-                ));
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+            response.put("error", HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+            response.put("message", "검색 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-    
+
     // JWT 토큰에서 사용자 ID 추출하는 메소드
     private Long extractUserIdFromToken(String authHeader) {
         try {
