@@ -1,6 +1,7 @@
 package com.example.auth_service.controller;
 
 import com.example.auth_service.service.SocialLoginService;
+import com.example.auth_service.service.UserService;
 import com.example.auth_service.dto.response.ApiResponse;
 
 import java.util.HashMap;
@@ -8,6 +9,9 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,10 +27,13 @@ import com.example.auth_service.dto.request.auth.EmailVerificationRequest;
 import com.example.auth_service.dto.request.auth.LoginRequest;
 import com.example.auth_service.dto.request.auth.TokenRefreshRequest;
 import com.example.auth_service.dto.request.auth.VerifyEmailRequest;
+import com.example.auth_service.dto.request.auth.WithdrawRequest;
 import com.example.auth_service.dto.request.social.SocialLoginRequest;
 import com.example.auth_service.dto.response.auth.AuthResponse;
 import com.example.auth_service.dto.response.auth.MessageResponse;
 import com.example.auth_service.dto.response.auth.VerificationResponse;
+import com.example.auth_service.exception.BadRequestException;
+import com.example.auth_service.exception.ResourceNotFoundException;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.service.AuthService;
 import com.example.auth_service.service.EmailVerificationService;
@@ -44,6 +51,7 @@ public class AuthController {
     private final AuthService authService;
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     // 새 의존성 추가
     private final EmailVerificationService emailVerificationService;
@@ -151,5 +159,61 @@ public class AuthController {
     @PostMapping("/social/naver")
     public ResponseEntity<AuthResponse> naverLogin(@Valid @RequestBody SocialLoginRequest request) {
         return ResponseEntity.ok(socialLoginService.loginWithNaver(request));
+    }
+
+    @PostMapping("/withdraw")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> withdrawUser(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody WithdrawRequest request) {
+
+        try {
+            User user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "email", userDetails.getUsername()));
+
+            userService.withdrawUser(user.getUserNo(), request.getPassword());
+
+            return ResponseEntity.ok(ApiResponse.success(
+                    "회원 탈퇴가 완료되었습니다.",
+                    new MessageResponse("회원 탈퇴가 성공적으로 처리되었습니다.")));
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(
+                    HttpStatus.BAD_REQUEST,
+                    e.getMessage()));
+        } catch (Exception e) {
+            log.error("회원 탈퇴 처리 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "회원 탈퇴 처리 중 오류가 발생했습니다."));
+        }
+    }
+
+    // 소셜 로그인 사용자를 위한 별도 엔드포인트
+    @PostMapping("/withdraw/social")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> withdrawSocialUser(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        try {
+            User user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "email", userDetails.getUsername()));
+
+            if (user.getLoginType() != 1) { // 소셜 로그인이 아닌 경우
+                return ResponseEntity.badRequest().body(ApiResponse.error(
+                        HttpStatus.BAD_REQUEST,
+                        "소셜 로그인 사용자만 이 기능을 사용할 수 있습니다."));
+            }
+
+            userService.withdrawUserSocial(user.getUserNo());
+
+            return ResponseEntity.ok(ApiResponse.success(
+                    "회원 탈퇴가 완료되었습니다.",
+                    new MessageResponse("회원 탈퇴가 성공적으로 처리되었습니다.")));
+        } catch (Exception e) {
+            log.error("소셜 회원 탈퇴 처리 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "회원 탈퇴 처리 중 오류가 발생했습니다."));
+        }
     }
 }

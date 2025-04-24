@@ -35,6 +35,11 @@ public class CustomUserDetailsService implements UserDetailsService {
                                 .orElseThrow(() -> new UsernameNotFoundException(
                                                 "User not found with email : " + email));
 
+                // 사용자가 탈퇴한 경우 로그인 차단
+                if ("WITHDRAWN".equals(user.getStatus())) {
+                        throw new UsernameNotFoundException("탈퇴한 회원입니다.");
+                }
+
                 // 비밀번호 정보 조회
                 Password passwordEntity = passwordRepository.findByUser_UserNo(user.getUserNo())
                                 .orElseThrow(() -> new UsernameNotFoundException(
@@ -46,4 +51,5 @@ public class CustomUserDetailsService implements UserDetailsService {
                                 passwordEntity.getPassword(), // 암호화된 비밀번호
                                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
         }
+
 }

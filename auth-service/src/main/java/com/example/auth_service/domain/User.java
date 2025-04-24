@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +32,13 @@ public class User implements UserDetails {
 
     @Column(name = "login_type")
     private Integer loginType; // 0: 일반, 1: 소셜
-    
+
+    @Column(name = "status")
+    @Builder.Default
+    private String status = "ACTIVE"; // 기본값을 ACTIVE로 지정
+
+    @Column(name = "withdrawn_at")
+    private LocalDateTime withdrawnAt;
 
     // 양방향 관계 설정 (필요한 경우)
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
