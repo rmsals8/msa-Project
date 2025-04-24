@@ -3,6 +3,7 @@ package com.example.schedule_service.repository;
 
 import com.example.schedule_service.domain.SavedSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,6 +15,8 @@ import java.util.Optional;
 @Repository
 public interface SavedScheduleRepository extends JpaRepository<SavedSchedule, Long> {
     // 사용자의 활성화된 저장 일정 목록 조회
+    boolean existsByIdAndUserNo(Long id, Long userNo);
+
     @Query("SELECT s FROM SavedSchedule s WHERE s.userNo = :userNo AND s.isDeleted = false AND s.expirationDate > :now")
     List<SavedSchedule> findActiveByUserNo(@Param("userNo") Long userNo, @Param("now") LocalDateTime now);
 
@@ -36,4 +39,8 @@ public interface SavedScheduleRepository extends JpaRepository<SavedSchedule, Lo
     // 필요시 segments만 로딩하는 별도 메서드
     @Query("SELECT s FROM SavedSchedule s LEFT JOIN FETCH s.segments WHERE s.id = :id AND s.userNo = :userNo")
     Optional<SavedSchedule> findByIdAndUserNoWithSegments(@Param("id") Long id, @Param("userNo") Long userNo);
+
+    @Modifying
+    @Query("UPDATE SavedSchedule s SET s.isDeleted = true, s.deletedAt = :now WHERE s.id = :id AND s.userNo = :userNo")
+    int markAsDeleted(@Param("id") Long id, @Param("userNo") Long userNo, @Param("now") LocalDateTime now);
 }

@@ -5,6 +5,9 @@ import com.example.schedule_service.dto.request.SaveScheduleRequest;
 import com.example.schedule_service.dto.response.SavedScheduleListResponse;
 import com.example.schedule_service.dto.response.SavedScheduleResponse;
 import com.example.schedule_service.repository.*;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -139,14 +142,45 @@ public class ScheduleSaveService {
                 return convertToResponse(schedule);
         }
 
+        @PersistenceContext
+        private EntityManager entityManager;
+
         @Transactional
         public void deleteSavedSchedule(Long scheduleId, Long userNo) {
-                SavedSchedule schedule = savedScheduleRepository.findByIdAndUserNo(scheduleId, userNo)
-                                .orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수 없습니다."));
+                // 해당 일정이 존재하는지 확인
+                boolean exists = savedScheduleRepository.existsByIdAndUserNo(scheduleId, userNo);
+                if (!exists) {
+                        throw new IllegalArgumentException("일정을 찾을 수 없습니다.");
+                }
 
-                schedule.setDeleted(true);
-                schedule.setDeletedAt(LocalDateTime.now());
-                savedScheduleRepository.save(schedule);
+                try {
+                        // 직접 SQL 쿼리를 사용하여 순서대로 삭제
+                        // 1. 먼저 세그먼트 삭제
+                        entityManager.createNativeQuery(
+                                        "DELETE FROM saved_schedule_segments WHERE saved_schedule_id = :scheduleId")
+                                        .setParameter("scheduleId", scheduleId)
+                                        .executeUpdate();
+                        log.info("세그먼트 삭제 완료: scheduleId={}", scheduleId);
+
+                        // 2. 그 다음 항목 삭제
+                        entityManager.createNativeQuery(
+                                        "DELETE FROM saved_schedule_items WHERE saved_schedule_id = :scheduleId")
+                                        .setParameter("scheduleId", scheduleId)
+                                        .executeUpdate();
+                        log.info("항목 삭제 완료: scheduleId={}", scheduleId);
+
+                        // 3. 마지막으로 일정 자체 삭제
+                        entityManager.createNativeQuery(
+                                        "DELETE FROM saved_schedules WHERE id = :scheduleId AND user_no = :userNo")
+                                        .setParameter("scheduleId", scheduleId)
+                                        .setParameter("userNo", userNo)
+                                        .executeUpdate();
+                        log.info("일정 삭제 완료: scheduleId={}", scheduleId);
+
+                } catch (Exception e) {
+                        log.error("일정 삭제 중 오류 발생: {}", e.getMessage(), e);
+                        throw new RuntimeException("일정 삭제 중 오류가 발생했습니다: " + e.getMessage(), e);
+                }
         }
 
         private SavedScheduleResponse convertToResponse(SavedSchedule schedule) {

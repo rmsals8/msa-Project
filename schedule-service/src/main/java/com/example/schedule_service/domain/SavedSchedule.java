@@ -33,7 +33,7 @@ public class SavedSchedule {
     @Column(name = "expiration_date", nullable = false)
     private LocalDateTime expirationDate;
 
-    @Column(name = "is_deleted", nullable = false)
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "TINYINT(1)")
     @Builder.Default
     private boolean isDeleted = false;
 

@@ -39,7 +39,8 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             "/api/v1/auth/validate-token",
             "/api/v1/auth/password",
             "/api/v1/places/**",
-            "/api/v1/schedules/**" );
+            "/api/v1/schedules/**",
+            "/api/v1/visit-histories");
 
     public AuthenticationFilter() {
         super(Config.class);

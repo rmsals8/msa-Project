@@ -95,6 +95,7 @@ public class ScheduleSaveController {
         }
 
         log.info("Schedule deletion request for user {} and schedule {}", userId, scheduleId);
+        log.info("일정 삭제 요청 받음: scheduleId={}, userId={}", scheduleId, userId);
 
         try {
             scheduleSaveService.deleteSavedSchedule(scheduleId, userId);
