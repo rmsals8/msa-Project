@@ -30,7 +30,7 @@ spring:
         - id: place-service
           uri: lb://place-service
           predicates:
-            - Path=/api/v1/places/**, /api/v1/visit-histories/**
+            - Path=/api/v1/places/**, /api/v1/visit-histories/**, /api/v1/preferences/**
           filters:
             - PreserveHostHeader
             - name: AuthenticationFilter
