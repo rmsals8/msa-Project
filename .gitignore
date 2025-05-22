@@ -1,16 +1,11 @@
-# 환경 변수 파일 (보안상 제외하되, 빌드 시 별도 주입)
-.env
 
-# 빌드 결과물 (용량 큰 파일들)
+.env
+HELP.md
 target/
-build/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-# IDE 관련 파일들
 ### STS ###
 .apt_generated
 .classpath
@@ -32,25 +27,9 @@ build/
 /dist/
 /nbdist/
 /.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
 ### VS Code ###
 .vscode/
-
-# Git 관련
-.git
-.gitignore
-
-# 문서
-HELP.md
-README.md
-*.md
-
-# 로그 파일
-*.log
-logs/
-
-# 임시 파일
-*.tmp
-*.temp
-.DS_Store
-Thumbs.db
