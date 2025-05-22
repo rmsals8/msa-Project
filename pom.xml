@@ -31,12 +31,7 @@
 		<spring-cloud.version>2024.0.1</spring-cloud.version>
 	</properties>
 	<dependencies>
-		<!-- Common 모듈 의존성 -->
-		<dependency>
-			<groupId>com.example</groupId>
-			<artifactId>common</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
+		
 		
 		<!-- Schedule Service에서 가져온 의존성들 -->
 		<!-- Spring Retry (schedule-service에서) -->
