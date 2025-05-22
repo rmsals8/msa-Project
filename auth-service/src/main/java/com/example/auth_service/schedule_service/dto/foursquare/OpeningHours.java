@@ -1,0 +1,15 @@
+package com.example.auth_service.schedule_service.dto.foursquare;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class OpeningHours {
+    private List<String> days;
+    private String open;
+    private String close;
+}

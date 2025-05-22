@@ -1,0 +1,43 @@
+//src/main/java/com/example/TripSpring/dto/navigation/NavigationResponse.java
+package com.example.auth_service.schedule_service.dto.navigation;
+
+import lombok.Builder;
+import lombok.Data;
+import java.util.List;
+
+import com.example.auth_service.schedule_service.dto.domain.Location;
+
+@Data
+@Builder
+public class NavigationResponse {
+    private String navigationId;
+    private NavigationStatus status;
+    private Location currentLocation;
+    private Location nextWaypoint;
+    private String currentInstruction;
+    private List<String> upcomingInstructions;
+    private int remainingDistance;
+    private int remainingTime;
+    private boolean rerouting;
+    private List<NavigationAlert> alerts;
+
+    @Data
+    @Builder
+    public static class NavigationAlert {
+        private AlertType type;
+        private String message;
+        private AlertSeverity severity;
+
+        public enum AlertType {
+            TRAFFIC, ACCIDENT, REROUTE, ARRIVAL, DELAY
+        }
+
+        public enum AlertSeverity {
+            INFO, WARNING, CRITICAL
+        }
+    }
+
+    public enum NavigationStatus {
+        ACTIVE, PAUSED, REROUTING, COMPLETED, ERROR
+    }
+}

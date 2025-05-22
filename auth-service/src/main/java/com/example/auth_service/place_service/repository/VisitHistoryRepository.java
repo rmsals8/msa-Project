@@ -1,0 +1,35 @@
+package com.example.auth_service.place_service.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import com.example.auth_service.place_service.domain.VisitHistory;
+
+@Repository
+public interface VisitHistoryRepository extends JpaRepository<VisitHistory, Long> {
+
+    List<VisitHistory> findByUserId(String userId);
+
+    List<VisitHistory> findByUserIdOrderByVisitDateDesc(String userId);
+
+    // 페이징 처리를 위한 메서드
+    Page<VisitHistory> findByUserIdOrderByVisitDateDesc(String userId, Pageable pageable);
+
+    Optional<VisitHistory> findByUserIdAndPlaceId(String userId, String placeId);
+
+    @Query("SELECT vh FROM VisitHistory vh WHERE vh.userId = ?1 AND vh.category = ?2")
+    List<VisitHistory> findByUserIdAndCategory(String userId, String category);
+
+    // 페이징 처리를 위한 카테고리별 검색 메서드
+    @Query("SELECT vh FROM VisitHistory vh WHERE vh.userId = ?1 AND vh.category = ?2")
+    Page<VisitHistory> findByUserIdAndCategoryPageable(String userId, String category, Pageable pageable);
+
+    @Query("SELECT vh.category, COUNT(vh) FROM VisitHistory vh WHERE vh.userId = ?1 GROUP BY vh.category")
+    List<Object[]> countVisitsByCategory(String userId);
+}
