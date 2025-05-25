@@ -12,7 +12,8 @@ import java.io.File;
     "com.example.auth_service.auth_service",           // auth_service 하위 모든 패키지
     "com.example.auth_service.place_service",          // place_service 패키지
     "com.example.auth_service.schedule_service",       // schedule_service 패키지  
-    "com.example.auth_service.navigation_service"      // navigation_service 패키지
+    "com.example.auth_service.navigation_service",     // navigation_service 패키지
+	"com.example.auth_service.common"
 })
 public class AuthServiceApplication {
 
