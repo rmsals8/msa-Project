@@ -184,38 +184,41 @@ public class ScheduleSaveService {
         }
 
         private SavedScheduleResponse convertToResponse(SavedSchedule schedule) {
-                List<SavedScheduleItem> items = savedScheduleItemRepository
-                                .findBySavedScheduleIdOrderBySequenceNo(schedule.getId());
-                List<SavedScheduleSegment> segments = savedScheduleSegmentRepository
-                                .findBySavedScheduleId(schedule.getId());
+        List<SavedScheduleItem> items = savedScheduleItemRepository
+                .findBySavedScheduleIdOrderBySequenceNo(schedule.getId());
+        List<SavedScheduleSegment> segments = savedScheduleSegmentRepository
+                .findBySavedScheduleId(schedule.getId());
 
-                return SavedScheduleResponse.builder()
-                                .id(schedule.getId())
-                                .scheduleName(schedule.getScheduleName())
-                                .createdAt(schedule.getCreatedAt())
-                                .expirationDate(schedule.getExpirationDate())
-                                .totalDistance(schedule.getTotalDistance())
-                                .totalTime(schedule.getTotalTime())
-                                .totalCost(schedule.getTotalCost())
-                                .scheduleItems(items.stream()
-                                                .map(item -> SavedScheduleResponse.ScheduleItemResponse.builder()
-                                                                .name(item.getName())
-                                                                .location(item.getLocation())
-                                                                .startTime(item.getStartTime())
-                                                                .endTime(item.getEndTime())
-                                                                .type(item.getType())
-                                                                .build())
-                                                .collect(Collectors.toList()))
-                                .segments(segments.stream()
-                                                .map(segment -> SavedScheduleResponse.SegmentResponse.builder()
-                                                                .fromLocation(segment.getFromItem().getName())
-                                                                .toLocation(segment.getToItem().getName())
-                                                                .distance(segment.getDistance())
-                                                                .duration(segment.getDuration())
-                                                                .transportMode(segment.getTransportMode())
-                                                                .build())
-                                                .collect(Collectors.toList()))
-                                .build();
+        return SavedScheduleResponse.builder()
+                .id(schedule.getId())
+                .scheduleName(schedule.getScheduleName())
+                .createdAt(schedule.getCreatedAt())
+                .expirationDate(schedule.getExpirationDate())
+                .totalDistance(schedule.getTotalDistance())
+                .totalTime(schedule.getTotalTime())
+                .totalCost(schedule.getTotalCost())
+                .scheduleItems(items.stream()
+                        .map(item -> SavedScheduleResponse.ScheduleItemResponse.builder()
+                                .name(item.getName())
+                                .location(item.getLocation())
+                                .startTime(item.getStartTime())
+                                .endTime(item.getEndTime())
+                                .type(item.getType())
+                                // ✅ 좌표 데이터 추가
+                                .latitude(item.getLatitude())
+                                .longitude(item.getLongitude())
+                                .build())
+                        .collect(Collectors.toList()))
+                .segments(segments.stream()
+                        .map(segment -> SavedScheduleResponse.SegmentResponse.builder()
+                                .fromLocation(segment.getFromItem().getName())
+                                .toLocation(segment.getToItem().getName())
+                                .distance(segment.getDistance())
+                                .duration(segment.getDuration())
+                                .transportMode(segment.getTransportMode())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
         }
 
         private SavedScheduleListResponse convertToListResponse(SavedSchedule schedule) {

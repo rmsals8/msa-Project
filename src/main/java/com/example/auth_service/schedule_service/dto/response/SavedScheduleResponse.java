@@ -27,6 +27,8 @@ public class SavedScheduleResponse {
         private LocalDateTime startTime;
         private LocalDateTime endTime;
         private String type;
+        private Double latitude;
+        private Double longitude;
     }
 
     @Data
