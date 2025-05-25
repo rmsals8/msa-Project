@@ -147,6 +147,8 @@ public class RouteSegmentAnalyzer {
         }
     }
 
+// RouteSegmentAnalyzer.java - mapRouteInfoToSegment 메서드 수정
+
     private void mapRouteInfoToSegment(
             String routeResponse,
             RouteSegmentDetailResponse segment,
@@ -160,18 +162,45 @@ public class RouteSegmentAnalyzer {
             List<GeoPoint> pathPoints = new ArrayList<>();
 
             // 총 거리와 예상 소요시간 추출
-            JSONObject properties = features.getJSONObject(0)
-                    .getJSONObject("properties");
-            segment.setDistance(properties.getDouble("totalDistance") / 1000.0); // m -> km
-            segment.setDuration(properties.getInt("totalTime")); // 분
+            JSONObject properties = features.getJSONObject(0).getJSONObject("properties");
+            
+            double distanceMeters = properties.getDouble("totalDistance");
+            double distanceKm = distanceMeters / 1000.0;
+            segment.setDistance(distanceKm);
 
-            // 경로 포인트와 안내 정보 추출
+            // **시간 단위 정규화 및 검증**
+            int apiTimeValue = properties.getInt("totalTime");
+            int durationMinutes;
+            
+            // T-map API는 초 단위로 반환하므로 분으로 변환
+            if (apiTimeValue > 1000) { // 1000초 이상이면 초 단위로 판단
+                durationMinutes = Math.max(1, apiTimeValue / 60);
+            } else { // 작은 값이면 이미 분 단위로 판단
+                durationMinutes = Math.max(1, apiTimeValue);
+            }
+            
+            // **거리 기반 합리성 검증**
+            int maxReasonableTime = calculateMaxReasonableTime(distanceKm, mode);
+            int minReasonableTime = calculateMinReasonableTime(distanceKm, mode);
+            
+            if (durationMinutes > maxReasonableTime) {
+                log.warn("Duration too high: {} min for {} km, adjusting to {} min", 
+                        durationMinutes, distanceKm, maxReasonableTime);
+                durationMinutes = maxReasonableTime;
+            } else if (durationMinutes < minReasonableTime) {
+                log.warn("Duration too low: {} min for {} km, adjusting to {} min", 
+                        durationMinutes, distanceKm, minReasonableTime);
+                durationMinutes = minReasonableTime;
+            }
+            
+            segment.setDuration(durationMinutes);
+
+            // 경로 포인트와 안내 정보 추출 (기존 코드)
             for (int i = 0; i < features.length(); i++) {
                 JSONObject feature = features.getJSONObject(i);
                 String type = feature.getString("type");
 
                 if (type.equals("Point")) {
-                    // 회전 등 안내 포인트
                     JSONObject point = feature.getJSONObject("geometry");
                     JSONArray coord = point.getJSONArray("coordinates");
                     String description = feature.getJSONObject("properties")
@@ -182,7 +211,6 @@ public class RouteSegmentAnalyzer {
                             new GeoPoint(coord.getDouble(1), coord.getDouble(0))));
 
                 } else if (type.equals("LineString")) {
-                    // 상세 경로 좌표
                     JSONArray coordinates = feature.getJSONObject("geometry")
                             .getJSONArray("coordinates");
 
@@ -199,10 +227,47 @@ public class RouteSegmentAnalyzer {
             segment.setPath(pathPoints);
             segment.setTurnByTurn(navigationPoints);
 
+            log.info("Processed route segment: {}km, {}min, mode={}", 
+                    distanceKm, durationMinutes, mode);
+
         } catch (Exception e) {
             log.error("Error parsing route response: {}", e.getMessage());
+            
+            // 파싱 실패시 거리 기반 기본값 설정
+            double fallbackDistance = segment.getDistance() > 0 ? segment.getDistance() : 1.0;
+            int fallbackDuration = calculateMaxReasonableTime(fallbackDistance, mode);
+            segment.setDuration(fallbackDuration);
+            
             throw new RuntimeException("Failed to parse route information");
         }
+    }
+
+    /**
+     * 교통수단과 거리에 따른 최대 합리적 시간 계산
+     */
+    private int calculateMaxReasonableTime(double distanceKm, TransportMode mode) {
+        double minSpeed = switch (mode) {
+            case WALK -> 3.0;      // 최소 3km/h
+            case BUS -> 10.0;      // 최소 10km/h (교통체증 고려)
+            case SUBWAY -> 25.0;   // 최소 25km/h
+            case TAXI -> 15.0;     // 최소 15km/h (교통체증 고려)
+        };
+        
+        return Math.max(5, (int) Math.ceil(distanceKm / minSpeed * 60));
+    }
+
+    /**
+     * 교통수단과 거리에 따른 최소 합리적 시간 계산
+     */
+    private int calculateMinReasonableTime(double distanceKm, TransportMode mode) {
+        double maxSpeed = switch (mode) {
+            case WALK -> 6.0;      // 최대 6km/h
+            case BUS -> 50.0;      // 최대 50km/h
+            case SUBWAY -> 80.0;   // 최대 80km/h
+            case TAXI -> 80.0;     // 최대 80km/h
+        };
+        
+        return Math.max(1, (int) Math.ceil(distanceKm / maxSpeed * 60));
     }
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {

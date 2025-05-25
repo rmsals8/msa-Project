@@ -56,25 +56,64 @@ public class FirstMapService2 {
             Map<String, Object> features = (Map<String, Object>) ((List<?>) responseBody.get("features")).get(0);
             Map<String, Object> properties = (Map<String, Object>) features.get("properties");
 
-            double totalTime = ((Number) properties.get("totalTime")).doubleValue();
+            // **시간 단위 정규화 - T-map은 초 단위로 반환**
+            double totalTimeSeconds = ((Number) properties.get("totalTime")).doubleValue();
+            int totalTimeMinutes = Math.max(1, (int) Math.ceil(totalTimeSeconds / 60.0));
+            
             double totalDistance = ((Number) properties.get("totalDistance")).doubleValue() / 1000.0; // meters to km
 
-            return new TrafficInfo(1.0, (int) totalTime, totalDistance);
+            // **비정상적인 시간 체크 및 보정**
+            if (totalTimeMinutes > 180) { // 3시간 초과
+                log.warn("API returned unrealistic time: {} minutes for distance: {} km", 
+                        totalTimeMinutes, totalDistance);
+                totalTimeMinutes = calculateReasonableTime(totalDistance);
+            }
+
+            log.info("Extracted traffic info: distance={}km, time={}min", totalDistance, totalTimeMinutes);
+            return new TrafficInfo(1.0, totalTimeMinutes, totalDistance);
         } catch (Exception e) {
             log.error("Error extracting traffic info: {}", e.getMessage());
             return estimateTrafficInfo(null, null);
         }
     }
 
+    /**
+     * 거리 기반으로 합리적인 이동시간 계산
+     */
+    private int calculateReasonableTime(double distanceKm) {
+        // 거리별 적절한 이동수단과 속도 결정
+        if (distanceKm <= 0.5) {
+            // 500m 이하: 도보 (4km/h)
+            return Math.max(5, (int) Math.ceil(distanceKm / 4.0 * 60));
+        } else if (distanceKm <= 2.0) {
+            // 2km 이하: 도보 또는 자전거 (6km/h)
+            return Math.max(10, (int) Math.ceil(distanceKm / 6.0 * 60));
+        } else if (distanceKm <= 10.0) {
+            // 10km 이하: 대중교통 (20km/h 평균)
+            return Math.max(15, (int) Math.ceil(distanceKm / 20.0 * 60));
+        } else if (distanceKm <= 30.0) {
+            // 30km 이하: 자동차 (40km/h 평균)
+            return Math.max(30, (int) Math.ceil(distanceKm / 40.0 * 60));
+        } else {
+            // 30km 초과: 고속 이동 (60km/h 평균)
+            return Math.max(45, (int) Math.ceil(distanceKm / 60.0 * 60));
+        }
+    }
+
+    // ✅ 수정된 estimateTrafficInfo 메소드
     private TrafficInfo estimateTrafficInfo(Location start, Location end) {
         if (start == null || end == null) {
             return new TrafficInfo(1.0, 15, 1.0); // 기본값
         }
 
-        // 간단한 거리 계산 (Haversine formula)
+        // 하버사인 공식으로 거리 계산
         double distance = calculateDistance(start, end);
-        int estimatedTime = (int) (distance * 3); // 평균 속도 20km/h 가정
+        
+        // ✅ 개선된 시간 계산 - calculateReasonableTime 사용
+        int estimatedTime = calculateReasonableTime(distance);
 
+        log.info("Estimated traffic info: distance={}km, time={}min", distance, estimatedTime);
+        
         return new TrafficInfo(1.0, estimatedTime, distance);
     }
 
