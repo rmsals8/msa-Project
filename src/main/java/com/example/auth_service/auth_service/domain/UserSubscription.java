@@ -22,7 +22,7 @@ public class UserSubscription {
     private Long subscriptionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_no", nullable = false)
+    @JoinColumn(name = "user_no", nullable = false, referencedColumnName = "user_no")
     private User user;
 
     @Enumerated(EnumType.STRING)
