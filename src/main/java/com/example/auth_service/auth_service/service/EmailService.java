@@ -23,12 +23,12 @@ public class EmailService {
     @Value("${app.email.sender}")
     private String sender;
 
-    @Value("${app.email.sender-name:Trip Helper}")
+    @Value("${app.email.sender-name:Schedule Maker}")
     private String senderName;
 
     public void sendEmailVerificationCode(String to, String code) {
         try {
-            String subject = "[Trip Helper] 회원가입 인증번호";
+            String subject = "[Schedule Maker] 회원가입 인증번호";
             String content = getEmailVerificationContent(code);
 
             sendEmail(to, subject, content);
@@ -56,7 +56,7 @@ public class EmailService {
                 + "</head>"
                 + "<body>"
                 + "<div class=\"container\">"
-                + "<div class=\"header\"><h2>Trip Helper 회원가입</h2></div>"
+                + "<div class=\"header\"><h2>Schedule Maker 회원가입</h2></div>"
                 + "<div class=\"content\">"
                 + "<p>안녕하세요!</p>"
                 + "<p>회원가입을 위한 인증번호입니다. 아래 6자리 코드를 입력해주세요:</p>"
@@ -64,7 +64,7 @@ public class EmailService {
                 + "<p>이 인증번호는 5분간 유효합니다.</p>"
                 + "</div>"
                 + "<div class=\"footer\">"
-                + "<p>Trip Helper &copy; 2025. All rights reserved.</p>"
+                + "<p>Schedule Maker &copy; 2025. All rights reserved.</p>"
                 + "<p>본 메일은 발신 전용으로 회신되지 않습니다.</p>"
                 + "</div>"
                 + "</div>"
@@ -78,7 +78,7 @@ public class EmailService {
     @Async
     public void sendPasswordResetCode(String to, String code) {
         try {
-            String subject = "[Trip Helper] 비밀번호 재설정 인증번호";
+            String subject = "[Schedule Maker] 비밀번호 재설정 인증번호";
             // Thymeleaf 템플릿 사용 코드 제거
             String content = getBasicPasswordResetEmailContent(code);
 
@@ -96,7 +96,7 @@ public class EmailService {
     @Async
     public void sendPasswordChangedNotification(String to) {
         try {
-            String subject = "[Trip Helper] 비밀번호가 변경되었습니다";
+            String subject = "[Schedule Maker] 비밀번호가 변경되었습니다";
             String content = getPasswordChangedEmailContent();
 
             sendEmail(to, subject, content);
@@ -142,7 +142,7 @@ public class EmailService {
                 + "</head>"
                 + "<body>"
                 + "<div class=\"container\">"
-                + "<div class=\"header\"><h2>Trip Helper 비밀번호 재설정</h2></div>"
+                + "<div class=\"header\"><h2>Schedule Maker 비밀번호 재설정</h2></div>"
                 + "<div class=\"content\">"
                 + "<p>안녕하세요!</p>"
                 + "<p>비밀번호 재설정을 위한 인증번호입니다. 아래 6자리 코드를 입력해주세요:</p>"
@@ -151,7 +151,7 @@ public class EmailService {
                 + "<p>비밀번호 재설정을 요청하지 않으셨다면 이 이메일을 무시하세요.</p>"
                 + "</div>"
                 + "<div class=\"footer\">"
-                + "<p>Trip Helper &copy; 2025. All rights reserved.</p>"
+                + "<p>Schedule Makerr &copy; 2025. All rights reserved.</p>"
                 + "<p>본 메일은 발신 전용으로 회신되지 않습니다.</p>"
                 + "</div>"
                 + "</div>"
@@ -179,7 +179,7 @@ public class EmailService {
                 + "</head>"
                 + "<body>"
                 + "<div class=\"container\">"
-                + "<div class=\"header\"><h2>Trip Helper 비밀번호 변경 완료</h2></div>"
+                + "<div class=\"header\"><h2>Schedule Maker 비밀번호 변경 완료</h2></div>"
                 + "<div class=\"content\">"
                 + "<p>안녕하세요!</p>"
                 + "<div class=\"icon\">✓</div>"
@@ -187,7 +187,7 @@ public class EmailService {
                 + "<p>본인이 변경하지 않았다면, 즉시 고객센터로 연락해 주세요.</p>"
                 + "</div>"
                 + "<div class=\"footer\">"
-                + "<p>Trip Helper &copy; 2025. All rights reserved.</p>"
+                + "<p>Schedule Maker &copy; 2025. All rights reserved.</p>"
                 + "<p>본 메일은 발신 전용으로 회신되지 않습니다.</p>"
                 + "</div>"
                 + "</div>"
