@@ -1,12 +1,12 @@
 package com.example.auth_service.auth_service.domain;
 
 import lombok.*;
+
+import org.hibernate.annotations.BatchSize;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,6 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@BatchSize(size = 10)
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,12 +36,13 @@ public class User implements UserDetails {
 
     @Column(name = "status")
     @Builder.Default
-    private String status = "ACTIVE"; // 기본값을 ACTIVE로 지정
+    private String status = "ACTIVE";
 
     @Column(name = "withdrawn_at")
     private LocalDateTime withdrawnAt;
 
-    // 양방향 관계 설정 (필요한 경우)
+    // ✅ 성능 최적화: BatchSize 추가
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Password password;
 
@@ -71,8 +73,8 @@ public class User implements UserDetails {
 
     @Override
     public String getPassword() {
-        // 비밀번호는 별도 테이블에 저장
-        return null;
+        // ✅ 안전한 비밀번호 접근 (null 체크 포함)
+        return this.password != null ? this.password.getPassword() : "";
     }
 
     @Override
@@ -98,5 +100,14 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    // ✅ 편의 메서드 추가 (선택사항)
+    public String getEncodedPassword() {
+        return getPassword();
+    }
+
+    public boolean hasPassword() {
+        return this.password != null && this.password.getPassword() != null;
     }
 }

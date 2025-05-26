@@ -48,6 +48,8 @@ public class AuthService {
         private final JwtTokenProvider tokenProvider;
         private final RedisTemplate<String, String> redisTemplate;
 
+        private final AsyncLogService asyncLogService;
+
         // 회원가입 성공 후 토큰 생성만 (로그인 시도 없이)
         private AuthResponse createAuthResponse(User user) {
                 String accessToken = tokenProvider.createToken(user.getEmail());
@@ -165,6 +167,7 @@ public class AuthService {
                 }
         }
 
+        // ✅ 로그인도 최적화 적용
         private AuthResponse authenticateUser(String email, String password) {
                 try {
                         Authentication authentication = authenticationManager.authenticate(
@@ -172,13 +175,14 @@ public class AuthService {
 
                         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                        User user = userRepository.findByEmail(email)
+                        // ✅ 한 번의 쿼리로 User 조회 (N+1 해결됨)
+                        User user = userRepository.findByEmailWithDetails(email)
                                         .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
                         String accessToken = tokenProvider.createToken(authentication);
                         String refreshToken = tokenProvider.createRefreshToken(authentication.getName());
 
-                        // Refresh Token을 Redis에 저장
+                        // Redis에 토큰 저장
                         redisTemplate.opsForValue().set(
                                         "RT:" + refreshToken,
                                         authentication.getName(),
@@ -187,16 +191,13 @@ public class AuthService {
 
                         // RefreshToken 테이블에도 저장
                         RefreshToken refreshTokenEntity = refreshTokenRepository.findByUserNo(user.getUserNo())
-                                        .orElse(RefreshToken.builder()
-                                                        .user(user)
-                                                        .build());
-
+                                        .orElse(RefreshToken.builder().user(user).build());
                         refreshTokenEntity.setRefreshToken(refreshToken);
                         refreshTokenRepository.save(refreshTokenEntity);
 
-                        // 로그인 시간 업데이트는 로그 테이블에 기록으로 대체
-                        saveLog(user.getUserNo(), "LOGIN_SUCCESS", "로그인 성공: " + email,
-                                        "127.0.0.1", "Unknown");
+                        // ✅ 로그 저장 비동기 처리
+                        asyncLogService.saveLogAsync(user.getUserNo(), "LOGIN_SUCCESS",
+                                        "로그인 성공: " + email, "127.0.0.1", "Unknown");
 
                         return AuthResponse.builder()
                                         .accessToken(accessToken)
@@ -208,14 +209,12 @@ public class AuthService {
                                         .build();
                 } catch (Exception e) {
                         log.error("로그인 실패: {}", email, e);
-                        // 로그인 실패 로그 기록
+
+                        // ✅ 로그 저장 비동기 처리
                         User user = userRepository.findByEmail(email).orElse(null);
                         if (user != null) {
-                                saveLog(user.getUserNo(), "LOGIN_FAIL", "로그인 실패: " + e.getMessage(),
-                                                "127.0.0.1", "Unknown");
-                        } else {
-                                saveLog(null, "LOGIN_FAIL", "존재하지 않는 이메일로 로그인 시도: " + email,
-                                                "127.0.0.1", "Unknown");
+                                asyncLogService.saveLogAsync(user.getUserNo(), "LOGIN_FAIL",
+                                                "로그인 실패: " + e.getMessage(), "127.0.0.1", "Unknown");
                         }
                         throw e;
                 }
@@ -261,63 +260,58 @@ public class AuthService {
 
         @Transactional
         public AuthResponse completeSignup(CompleteSignupRequest request) {
-                // 이메일 중복 체크
+                long startTime = System.currentTimeMillis();
+
+                // ✅ 1. 빠른 유효성 검사 먼저 수행
                 if (userRepository.existsByEmail(request.getEmail())) {
                         throw new BadRequestException("이미 사용중인 이메일입니다.");
                 }
 
-                // 인증 토큰 검증
-                boolean isTokenValid = emailVerificationService.validateVerificationToken(
-                                request.getEmail(), request.getVerificationToken());
-
-                if (!isTokenValid) {
-                        throw new BadRequestException("유효하지 않은 인증 토큰입니다. 이메일 인증을 다시 진행해주세요.");
+                // ✅ 2. 인증 토큰 검증 (Redis 한 번만 호출)
+                if (!emailVerificationService.validateVerificationToken(
+                                request.getEmail(), request.getVerificationToken())) {
+                        throw new BadRequestException("유효하지 않은 인증 토큰입니다.");
                 }
 
-                // 사용자 생성
+                // ✅ 3. 한 번의 트랜잭션으로 모든 엔티티 저장
                 User user = User.builder()
                                 .userName(request.getName())
                                 .email(request.getEmail())
-                                .loginType(0) // 일반 로그인은 0
+                                .loginType(0)
                                 .build();
 
-                // 로그 추가
-                log.info("약관 동의 정보: termsAgreed={}, marketingAgreed={}",
-                                request.isTermsAgreed(), request.isMarketingAgreed());
-
-                // 약관 동의 정보 생성
+                // 약관 동의 정보 생성 및 연결
                 UserAgreement userAgreement = UserAgreement.builder()
                                 .user(user)
                                 .termsAgreed(request.isTermsAgreed())
                                 .marketingAgreed(request.isMarketingAgreed())
                                 .createdAt(LocalDateTime.now())
                                 .build();
-
-                // 사용자와 약관 동의 정보 연결
                 user.setUserAgreement(userAgreement);
 
-                // 사용자 저장 (cascade로 인해 userAgreement도 함께 저장됨)
+                // ✅ 4. 사용자 저장 (cascade로 userAgreement도 함께 저장)
                 User savedUser = userRepository.save(user);
 
-                // 비밀번호 저장
+                // ✅ 5. 비밀번호 저장
                 String salt = generateSalt();
                 Password password = Password.builder()
-                                .user(user)
+                                .user(savedUser)
                                 .salt(salt)
                                 .password(passwordEncoder.encode(request.getPassword()))
                                 .updateDate(LocalDateTime.now())
                                 .build();
-
                 passwordRepository.save(password);
 
-                // 회원가입 로그 기록
-                saveLog(savedUser.getUserNo(), "SIGNUP", "회원가입 성공: " + request.getEmail(),
-                                "127.0.0.1", "Unknown");
+                // ✅ 6. 로그 저장을 비동기로 처리 (응답 속도 향상)
+                asyncLogService.saveLogAsync(savedUser.getUserNo(), "SIGNUP",
+                                "회원가입 성공: " + request.getEmail(), "127.0.0.1", "Unknown");
 
-                // 약관 동의 정보 저장 직전에 로그 추가
-                log.info("약관 동의 정보 저장: userNo={}, termsAgreed={}, marketingAgreed={}",
-                                savedUser.getUserNo(), request.isTermsAgreed(), request.isMarketingAgreed());
-                // 자동 로그인을 시도하지 않고 성공 응답만 반환
-                return createAuthResponse(savedUser);
+                // ✅ 7. 토큰 생성 및 응답
+                AuthResponse response = createAuthResponse(savedUser);
+
+                long endTime = System.currentTimeMillis();
+                log.info("회원가입 처리 시간: {}ms", (endTime - startTime));
+
+                return response;
         }
 }
