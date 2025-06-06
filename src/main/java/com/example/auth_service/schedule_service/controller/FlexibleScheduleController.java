@@ -14,10 +14,13 @@ import com.example.auth_service.schedule_service.dto.domain.Location;
 import com.example.auth_service.schedule_service.dto.domain.Schedule;
 import com.example.auth_service.schedule_service.dto.domain.ScheduleType;
 import com.example.auth_service.schedule_service.dto.request.FlexibleScheduleRequest;
+import com.example.auth_service.schedule_service.dto.request.MultipleScheduleOptimizationRequest;
 import com.example.auth_service.schedule_service.dto.response.FlexibleScheduleResponse;
+import com.example.auth_service.schedule_service.dto.response.MultipleOptimizeResponse;
 import com.example.auth_service.schedule_service.dto.scheduler.OptimizeResponse;
 import com.example.auth_service.schedule_service.dto.scheduler.ScheduleOptimizationRequest;
 import com.example.auth_service.schedule_service.service.FlexibleScheduleService;
+import com.example.auth_service.schedule_service.service.MultipleScheduleOptimizationService;
 import com.example.auth_service.schedule_service.service.ScheduleOptimizationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -29,6 +32,7 @@ public class FlexibleScheduleController {
 
     private final FlexibleScheduleService flexibleScheduleService;
     private final ScheduleOptimizationService scheduleService;
+    private final MultipleScheduleOptimizationService multipleScheduleOptimizationService;
     private final ObjectMapper objectMapper;
 
     @PostMapping("/optimize-1")
@@ -68,6 +72,78 @@ public class FlexibleScheduleController {
             log.error("Error optimizing schedules", e);
             throw new RuntimeException("Failed to optimize schedules", e);
         }
+    }
+
+    @PostMapping("/optimize-multiple")
+    public ResponseEntity<MultipleOptimizeResponse> optimizeMultipleSchedules(
+            @RequestBody MultipleScheduleOptimizationRequest request) {
+        
+        try {
+            // 전체 요청 데이터 로깅
+            try {
+                log.info("Multiple optimization request data: {}", objectMapper.writeValueAsString(request));
+            } catch (Exception e) {
+                log.warn("Failed to serialize multiple request for logging", e);
+            }
+
+            log.info("Received multiple schedule optimization request: {} options",
+                    request.getOptions().size());
+
+            // 유효성 검사
+            if (request.getOptions() == null || request.getOptions().isEmpty()) {
+                throw new IllegalArgumentException("At least one option is required");
+            }
+
+            // 각 옵션에 대한 기본 검증
+            for (MultipleScheduleOptimizationRequest.ScheduleOption option : request.getOptions()) {
+                if (option.getFixedSchedules() == null || option.getFixedSchedules().isEmpty()) {
+                    throw new IllegalArgumentException(
+                        String.format("Option %d must have at least one fixed schedule", option.getOptionId()));
+                }
+            }
+
+            // 다중 최적화 서비스 호출
+            MultipleOptimizeResponse response = multipleScheduleOptimizationService.optimizeMultipleSchedules(request);
+
+            log.info("Multiple schedule optimization completed successfully for {} options", 
+                    request.getOptions().size());
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid multiple request data: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(
+                MultipleOptimizeResponse.builder()
+                    .optimizedOptions(new ArrayList<>())
+                    .build());
+        } catch (Exception e) {
+            log.error("Error optimizing multiple schedules", e);
+            throw new RuntimeException("Failed to optimize multiple schedules", e);
+        }
+    }
+
+    @PostMapping("/optimize-flexible")
+    public ResponseEntity<FlexibleScheduleResponse> optimizeFlexibleSchedules(
+            @RequestBody FlexibleScheduleRequest request) {
+
+        // 디버깅 정보 추가
+        log.info("유연한 일정 최적화 요청 받음: 고정 일정 {}개, 유연한 일정 {}개",
+                request.getFixedSchedules().size(), request.getFlexibleOptions().size());
+
+        // 요청 데이터 검증
+        if (request.getFixedSchedules().isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                    FlexibleScheduleResponse.builder()
+                            .build());
+        }
+
+        FlexibleScheduleResponse response = flexibleScheduleService.optimizeFlexibleSchedules(
+                request.getFixedSchedules(),
+                request.getFlexibleOptions());
+
+        log.info("생성된 경로 옵션: {}개", response.getRouteOptions().size());
+
+        return ResponseEntity.ok(response);
     }
 
     private List<Schedule> convertFixedSchedules(List<ScheduleOptimizationRequest.FixedScheduleDTO> dtoList) {
@@ -119,29 +195,5 @@ public class FlexibleScheduleController {
         }
 
         return schedules;
-    }
-
-    @PostMapping("/optimize-flexible")
-    public ResponseEntity<FlexibleScheduleResponse> optimizeFlexibleSchedules(
-            @RequestBody FlexibleScheduleRequest request) {
-
-        // 디버깅 정보 추가
-        log.info("유연한 일정 최적화 요청 받음: 고정 일정 {}개, 유연한 일정 {}개",
-                request.getFixedSchedules().size(), request.getFlexibleOptions().size());
-
-        // 요청 데이터 검증
-        if (request.getFixedSchedules().isEmpty()) {
-            return ResponseEntity.badRequest().body(
-                    FlexibleScheduleResponse.builder()
-                            .build());
-        }
-
-        FlexibleScheduleResponse response = flexibleScheduleService.optimizeFlexibleSchedules(
-                request.getFixedSchedules(),
-                request.getFlexibleOptions());
-
-        log.info("생성된 경로 옵션: {}개", response.getRouteOptions().size());
-
-        return ResponseEntity.ok(response);
     }
 }
