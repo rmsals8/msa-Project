@@ -45,15 +45,19 @@ public class VisitHistoryController {
             @RequestBody VisitHistoryDto visitHistoryDto,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
-        Long userId = extractUserIdFromToken(authHeader);
+        // ✅ 성능 최적화: 빠른 사용자 ID 추출
+        String userId = extractUserIdFromTokenFast(authHeader);
         if (userId == null) {
             return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
 
         try {
-            VisitHistory addedHistory = visitHistoryService.addVisitHistory(
-                    visitHistoryDto,
-                    userId.toString());
+            long startTime = System.currentTimeMillis();
+            
+            VisitHistory addedHistory = visitHistoryService.addVisitHistory(visitHistoryDto, userId);
+            
+            long endTime = System.currentTimeMillis();
+            log.debug("✅ 방문 기록 추가 완료: {}ms", (endTime - startTime));
 
             return createSuccessResponse("방문 기록이 성공적으로 추가되었습니다.", addedHistory);
         } catch (Exception e) {
@@ -62,13 +66,16 @@ public class VisitHistoryController {
         }
     }
 
-    // 기존 방문 기록 조회
+    // ✅ 성능 최적화: 기존 방문 기록 조회
     @GetMapping
     public ResponseEntity<Map<String, Object>> getVisitHistories(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) String category) {
 
-        Long userId = extractUserIdFromToken(authHeader);
+        long startTime = System.currentTimeMillis();
+        
+        // ✅ 빠른 사용자 ID 추출 (DB 조회 없음)
+        String userId = extractUserIdFromTokenFast(authHeader);
         if (userId == null) {
             return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
@@ -77,19 +84,23 @@ public class VisitHistoryController {
             List<VisitHistory> histories;
 
             if (category != null && !category.isBlank()) {
-                histories = visitHistoryService.getVisitHistoriesByCategory(userId.toString(), category);
+                histories = visitHistoryService.getVisitHistoriesByCategory(userId, category);
             } else {
-                histories = visitHistoryService.getVisitHistories(userId.toString());
+                histories = visitHistoryService.getVisitHistories(userId);
             }
+
+            long endTime = System.currentTimeMillis();
+            log.info("✅ 방문 기록 조회 완료: {}개, {}ms", histories.size(), (endTime - startTime));
 
             return createSuccessResponse("방문 기록 조회에 성공했습니다.", histories);
         } catch (Exception e) {
-            log.error("Failed to retrieve visit histories", e);
+            long endTime = System.currentTimeMillis();
+            log.error("❌ 방문 기록 조회 실패: {}ms - {}", (endTime - startTime), e.getMessage());
             return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "방문 기록 조회 중 오류가 발생했습니다.");
         }
     }
 
-    // 페이징 처리가 적용된 방문 기록 조회 엔드포인트
+    // ✅ 성능 최적화: 페이징 처리가 적용된 방문 기록 조회
     @GetMapping("/paged")
     public ResponseEntity<Map<String, Object>> getVisitHistoriesPaged(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -97,7 +108,10 @@ public class VisitHistoryController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Long userId = extractUserIdFromToken(authHeader);
+        long startTime = System.currentTimeMillis();
+
+        // ✅ 빠른 사용자 ID 추출
+        String userId = extractUserIdFromTokenFast(authHeader);
         if (userId == null) {
             return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
@@ -108,10 +122,9 @@ public class VisitHistoryController {
             Page<VisitHistory> historiesPage;
 
             if (category != null && !category.isBlank()) {
-                historiesPage = visitHistoryService.getVisitHistoriesByCategoryPaged(userId.toString(), category,
-                        pageable);
+                historiesPage = visitHistoryService.getVisitHistoriesByCategoryPaged(userId, category, pageable);
             } else {
-                historiesPage = visitHistoryService.getVisitHistoriesPaged(userId.toString(), pageable);
+                historiesPage = visitHistoryService.getVisitHistoriesPaged(userId, pageable);
             }
 
             // 페이징 정보를 포함한 응답 생성
@@ -125,9 +138,14 @@ public class VisitHistoryController {
             pageInfo.put("first", historiesPage.isFirst());
             pageInfo.put("empty", historiesPage.isEmpty());
 
+            long endTime = System.currentTimeMillis();
+            log.info("✅ 페이징 방문 기록 조회 완료: {}개, {}ms", 
+                historiesPage.getContent().size(), (endTime - startTime));
+
             return createSuccessResponse("방문 기록 조회에 성공했습니다.", pageInfo);
         } catch (Exception e) {
-            log.error("Failed to retrieve paged visit histories", e);
+            long endTime = System.currentTimeMillis();
+            log.error("❌ 페이징 방문 기록 조회 실패: {}ms - {}", (endTime - startTime), e.getMessage());
             return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "방문 기록 조회 중 오류가 발생했습니다.");
         }
     }
@@ -136,13 +154,16 @@ public class VisitHistoryController {
     public ResponseEntity<Map<String, Object>> getCategoryStats(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
-        Long userId = extractUserIdFromToken(authHeader);
+        // ✅ 빠른 사용자 ID 추출
+        String userId = extractUserIdFromTokenFast(authHeader);
         if (userId == null) {
             return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
 
         try {
-            List<Object[]> stats = visitHistoryService.getCategoryStats(userId.toString());
+            long startTime = System.currentTimeMillis();
+            
+            List<Object[]> stats = visitHistoryService.getCategoryStats(userId);
 
             Map<String, Long> result = new HashMap<>();
             for (Object[] stat : stats) {
@@ -150,6 +171,9 @@ public class VisitHistoryController {
                 Long count = ((Number) stat[1]).longValue();
                 result.put(category, count);
             }
+
+            long endTime = System.currentTimeMillis();
+            log.debug("✅ 카테고리 통계 조회 완료: {}ms", (endTime - startTime));
 
             return createSuccessResponse("카테고리 통계 조회에 성공했습니다.", result);
         } catch (Exception e) {
@@ -163,13 +187,14 @@ public class VisitHistoryController {
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
-        Long userId = extractUserIdFromToken(authHeader);
+        // ✅ 빠른 사용자 ID 추출
+        String userId = extractUserIdFromTokenFast(authHeader);
         if (userId == null) {
             return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
 
         try {
-            visitHistoryService.deleteVisitHistory(id, userId.toString());
+            visitHistoryService.deleteVisitHistory(id, userId);
             return createSuccessResponse("방문 기록이 성공적으로 삭제되었습니다.", null);
         } catch (IllegalArgumentException e) {
             log.warn("Visit history not found: {}", e.getMessage());
@@ -184,13 +209,14 @@ public class VisitHistoryController {
     public ResponseEntity<Map<String, Object>> deleteAllVisitHistories(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
-        Long userId = extractUserIdFromToken(authHeader);
+        // ✅ 빠른 사용자 ID 추출
+        String userId = extractUserIdFromTokenFast(authHeader);
         if (userId == null) {
             return createErrorResponse(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.");
         }
 
         try {
-            visitHistoryService.deleteAllVisitHistories(userId.toString());
+            visitHistoryService.deleteAllVisitHistories(userId);
             return createSuccessResponse("모든 방문 기록이 성공적으로 삭제되었습니다.", null);
         } catch (Exception e) {
             log.error("Failed to delete all visit histories", e);
@@ -198,8 +224,8 @@ public class VisitHistoryController {
         }
     }
 
-    // JWT 토큰에서 사용자 ID 추출하는 메소드
-    private Long extractUserIdFromToken(String authHeader) {
+    // ✅ 성능 최적화: JWT 토큰에서 userId만 빠르게 추출 (DB 조회 없음)
+    private String extractUserIdFromTokenFast(String authHeader) {
         try {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return null;
@@ -221,9 +247,9 @@ public class VisitHistoryController {
             // JSON으로 파싱
             JsonNode payloadJson = objectMapper.readTree(payload);
 
-            // userId claim 추출
+            // userId claim 추출 (String으로 반환)
             if (payloadJson.has("userId")) {
-                return payloadJson.get("userId").asLong();
+                return payloadJson.get("userId").asText();
             } else {
                 log.warn("userId claim not found in token");
                 return null;
@@ -232,6 +258,12 @@ public class VisitHistoryController {
             log.error("Failed to extract userId from token", e);
             return null;
         }
+    }
+
+    // ✅ 기존 메소드는 레거시 호환성을 위해 유지 (하지만 사용 안 함)
+    private Long extractUserIdFromToken(String authHeader) {
+        String userId = extractUserIdFromTokenFast(authHeader);
+        return userId != null ? Long.parseLong(userId) : null;
     }
 
     private ResponseEntity<Map<String, Object>> createSuccessResponse(String message, Object data) {

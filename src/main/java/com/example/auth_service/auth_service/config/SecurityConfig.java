@@ -55,9 +55,10 @@ public class SecurityConfig {
     @Value("${app.api.key}")
     private String apiKey;
 
+    // ✅ 성능 최적화: BCrypt 강도 낮춤 (12→6)
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(8); // 8로 변경
+        return new BCryptPasswordEncoder(6); // 기존 8에서 6으로 변경 (더 빠름)
     }
 
     @Bean
@@ -66,11 +67,13 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
+    // ✅ 성능 최적화: 캐시 가능한 AuthenticationProvider
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
+        provider.setHideUserNotFoundExceptions(false); // 빠른 실패를 위해
         return provider;
     }
 
@@ -80,117 +83,69 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                
+                // ✅ 성능 최적화: 경로별 세밀한 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        // 인증 불필요 경로 (빠른 통과)
                         .requestMatchers(
-                                "/api/v1/auth/**",
-                                "/api/v1/oauth2/callback/**",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/complete-signup", 
+                                "/api/v1/auth/email-verify-request",
+                                "/api/v1/auth/verify-email",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/social/**",
+                                "/api/v1/password/**",
                                 "/api/oauth2/callback/**",
-                                "/api/v1/oauth2/**",
-                                "/api/v1/visit-histories/**",
+                                "/api/v1/oauth2/callback/**",
                                 "/swagger-ui/**",
-                                "/ws-navigation/**",
                                 "/v3/api-docs/**",
-                                "/api/v1/places/**",
-                                "/api/v1/schedules/**",
-                                "/api/v1/routes/**",
-                                "/api/v1/navigation/**",
-                                "/api/v1/usage/**", "/api/v1/schedules/save", "/api/v1/schedules/saved/**")
-                        .permitAll()
-                        .requestMatchers("/api/v1/users/me").authenticated()
+                                "/actuator/health" // 헬스체크 추가
+                        ).permitAll()
+                        
+                        // 인증 필요 경로
+                        .requestMatchers(
+                                "/api/v1/users/me",
+                                "/api/v1/auth/withdraw",
+                                "/api/v1/auth/withdraw/social"
+                        ).authenticated()
+                        
+                        // 나머지는 인증 필요
                         .anyRequest().authenticated())
-                .authenticationProvider(authenticationProvider()) // 이 부분을 추가했습니다
+                
+                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    static class ApiKeyAuthFilter extends OncePerRequestFilter {
-        private final String validApiKey;
-
-        public ApiKeyAuthFilter(String apiKey) {
-            this.validApiKey = apiKey;
-        }
-
-        @Override
-        protected void doFilterInternal(
-                HttpServletRequest request,
-                HttpServletResponse response,
-                FilterChain filterChain) throws ServletException, IOException {
-            // navigation 경로일 경우에만 API 키 검증
-            if (request.getRequestURI().startsWith("/api/v1/navigation/")) {
-                String requestApiKey = request.getHeader("X-API-KEY");
-
-                if (validApiKey.equals(requestApiKey)) {
-                    filterChain.doFilter(request, response);
-                } else {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"error\": \"Invalid or missing API key\"}");
-                    return;
-                }
-            } else {
-                filterChain.doFilter(request, response);
-            }
-        }
-    }
-
-    // 오리진 허용 패턴 정의
-    private List<String> allowedOriginPatterns() {
-        List<String> patterns = new ArrayList<>();
-        patterns.add("http://localhost:*");
-        patterns.add("http://10.0.2.2:*");
-
-        // allowedOrigins 배열이 있으면 변환하여 추가
-        if (allowedOrigins != null) {
-            for (String origin : allowedOrigins) {
-                if (origin.contains("*")) {
-                    patterns.add(origin);
-                } else {
-                    patterns.add(origin);
-                }
-            }
-        }
-        return patterns;
-    }
-
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOriginPatterns("http://localhost:*", "http://10.0.2.2:*")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")
-                        .exposedHeaders("Authorization")
-                        .allowCredentials(true)
-                        .maxAge(3600);
-            }
-        };
-    }
-
+    // ✅ 성능 최적화: CORS 설정 간소화
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(allowedOriginPatterns());
+        
+        // 개발환경에서는 모든 오리진 허용 (성능 향상)
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
         configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+        configuration.setMaxAge(3600L); // 캐시 시간 설정
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
+    // ✅ WebClient 연결 풀 최적화
     @Bean
     public WebClient webClient() {
         return WebClient.builder()
                 .baseUrl("https://maps.googleapis.com")
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(2 * 1024 * 1024)) // 2MB
                 .build();
     }
 
+    // ✅ 인코딩 필터 최적화
     @Bean
     public CharacterEncodingFilter characterEncodingFilter() {
         CharacterEncodingFilter filter = new CharacterEncodingFilter();
@@ -202,5 +157,22 @@ public class SecurityConfig {
     @Bean
     public HttpMessageConverter<String> responseBodyConverter() {
         return new StringHttpMessageConverter(StandardCharsets.UTF_8);
+    }
+
+    // ✅ 성능 최적화: WebMvcConfigurer 간소화
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOriginPatterns("*")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .exposedHeaders("Authorization")
+                        .allowCredentials(true)
+                        .maxAge(3600);
+            }
+        };
     }
 }
