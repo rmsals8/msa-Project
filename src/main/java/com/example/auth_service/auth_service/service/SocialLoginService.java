@@ -47,8 +47,6 @@ public class SocialLoginService {
     // 소셜 로그인 코드
     private static final int NAVER_SOCIAL_CODE = 5;
     private static final int KAKAO_SOCIAL_CODE = 4;
-    // ✅ description 최대 길이 제한 (DB 컬럼 크기에 맞춤)
-    private static final int MAX_DESCRIPTION_LENGTH = 255;
 
     public AuthResponse loginWithNaver(SocialLoginRequest request) {
         try {
@@ -113,9 +111,10 @@ public class SocialLoginService {
             // 5. RefreshToken 저장
             saveRefreshToken(user, refreshToken);
 
-            // 6. 로그인 성공 로그 기록 (✅ description 길이 제한)
-            String logDescription = "네이버 로그인 성공: " + naverUserId + (isNewUser ? " (신규 가입)" : "");
-            saveLog(user, "NAVER_LOGIN_SUCCESS", logDescription, "127.0.0.1", "Unknown");
+            // 6. 로그인 성공 로그 기록 (✅ 원래대로 간단하게)
+            saveLog(user, "NAVER_LOGIN_SUCCESS",
+                    "네이버 로그인 성공: " + naverUserId + (isNewUser ? " (신규 가입)" : ""),
+                    "127.0.0.1", "Unknown");
 
             return AuthResponse.builder()
                     .accessToken(accessToken)
@@ -128,9 +127,10 @@ public class SocialLoginService {
 
         } catch (Exception e) {
             log.error("Naver login failed", e);
-            // 로그인 실패 로그 기록 (✅ description 길이 제한)
-            String logDescription = "네이버 로그인 실패: " + e.getMessage();
-            saveLog(null, "NAVER_LOGIN_FAIL", logDescription, "127.0.0.1", "Unknown");
+            // ✅ 로그인 실패 로그 기록 (원래대로 간단하게)
+            saveLog(null, "NAVER_LOGIN_FAIL",
+                    "네이버 로그인 실패: " + e.getMessage(),
+                    "127.0.0.1", "Unknown");
             throw new RuntimeException("Failed to process Naver login", e);
         }
     }
@@ -200,9 +200,10 @@ public class SocialLoginService {
             // 5. RefreshToken 저장
             saveRefreshToken(user, refreshToken);
 
-            // 6. 로그인 성공 로그 기록 (✅ description 길이 제한)
-            String logDescription = "카카오 로그인 성공: " + kakaoUserId + (isNewUser ? " (신규 가입)" : "");
-            saveLog(user, "KAKAO_LOGIN_SUCCESS", logDescription, "127.0.0.1", "Unknown");
+            // 6. 로그인 성공 로그 기록 (✅ 원래대로 간단하게)
+            saveLog(user, "KAKAO_LOGIN_SUCCESS",
+                    "카카오 로그인 성공: " + kakaoUserId + (isNewUser ? " (신규 가입)" : ""),
+                    "127.0.0.1", "Unknown");
 
             return AuthResponse.builder()
                     .accessToken(accessToken)
@@ -215,9 +216,10 @@ public class SocialLoginService {
 
         } catch (Exception e) {
             log.error("Kakao login failed", e);
-            // 로그인 실패 로그 기록 (✅ description 길이 제한)
-            String logDescription = "카카오 로그인 실패: " + e.getMessage();
-            saveLog(null, "KAKAO_LOGIN_FAIL", logDescription, "127.0.0.1", "Unknown");
+            // ✅ 로그인 실패 로그 기록 (원래대로 간단하게)
+            saveLog(null, "KAKAO_LOGIN_FAIL",
+                    "카카오 로그인 실패: " + e.getMessage(),
+                    "127.0.0.1", "Unknown");
             throw new RuntimeException("Failed to process Kakao login", e);
         }
     }
@@ -250,33 +252,29 @@ public class SocialLoginService {
                 .build();
     }
 
-    // ✅ 안전한 로그 저장 메서드 (description 길이 제한)
+    // ✅ 원래대로 간단한 로그 저장 메서드 (description 길이만 체크)
     private void saveLog(User user, String actionType, String description, String ipAddress, String userAgent) {
         try {
-            // description이 너무 길면 자르기 (DB 제약사항 준수)
-            String safeDescription = description;
-            if (description != null && description.length() > MAX_DESCRIPTION_LENGTH) {
-                safeDescription = description.substring(0, MAX_DESCRIPTION_LENGTH - 3) + "...";
-                log.warn("로그 설명이 너무 길어서 잘림: 원본길이={}, 잘린길이={}", 
-                         description.length(), safeDescription.length());
+            // description이 너무 길면 자르기 (255자 제한)
+            if (description != null && description.length() > 255) {
+                description = description.substring(0, 252) + "...";
             }
 
-            Log logEntity = Log.builder()
+            Log log = Log.builder()
                     .user(user) // User 객체 전달
                     .actionType(actionType)
-                    .description(safeDescription) // 길이가 제한된 description 사용
+                    .description(description)
                     .ipAddress(ipAddress)
                     .userAgent(userAgent)
                     .status("COMPLETED")
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            logRepository.save(logEntity);
-            log.debug("로그 저장 완료: actionType={}, user={}", actionType, user != null ? user.getUserNo() : "null");
+            logRepository.save(log);
 
         } catch (Exception e) {
-            // 로그 저장 실패는 메인 로직에 영향을 주면 안 되므로 에러만 기록
-            log.error("로그 저장 실패: actionType={}, error={}", actionType, e.getMessage());
+            // 로그 저장 실패는 무시 (메인 로직에 영향 주지 않음)
+            log.error("로그 저장 실패: {}", e.getMessage());
         }
     }
 }
