@@ -131,7 +131,7 @@ public class SocialLoginService {
             // 로그인 실패 로그 기록 (✅ description 길이 제한)
             String logDescription = "네이버 로그인 실패: " + e.getMessage();
             saveLog(null, "NAVER_LOGIN_FAIL", logDescription, "127.0.0.1", "Unknown");
-            throw new OAuth2AuthenticationException(null, "Failed to process Naver login", e);
+            throw new RuntimeException("Failed to process Naver login", e);
         }
     }
 
@@ -218,7 +218,7 @@ public class SocialLoginService {
             // 로그인 실패 로그 기록 (✅ description 길이 제한)
             String logDescription = "카카오 로그인 실패: " + e.getMessage();
             saveLog(null, "KAKAO_LOGIN_FAIL", logDescription, "127.0.0.1", "Unknown");
-            throw new OAuth2AuthenticationException(null, "Failed to process Kakao login", e);
+            throw new RuntimeException("Failed to process Kakao login", e);
         }
     }
 
