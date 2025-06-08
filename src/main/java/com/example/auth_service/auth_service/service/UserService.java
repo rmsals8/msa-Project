@@ -32,6 +32,9 @@ public class UserService {
     private final LogRepository logRepository;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, String> redisTemplate;
+    
+    // ✅ description 최대 길이 제한 (DB 컬럼 크기에 맞춤)
+    private static final int MAX_DESCRIPTION_LENGTH = 255;
 
     public User getUserById(Long id) {
         return userRepository.findById(id)
@@ -68,7 +71,7 @@ public class UserService {
             refreshTokenRepository.delete(token);
         });
 
-        // 탈퇴 로그 기록
+        // 탈퇴 로그 기록 (✅ 안전한 로그 저장)
         saveLog(userNo, "USER_WITHDRAWN", "회원 탈퇴 완료", "127.0.0.1", "Unknown");
     }
 
@@ -89,33 +92,46 @@ public class UserService {
             refreshTokenRepository.delete(token);
         });
 
-        // 탈퇴 로그 기록
+        // 탈퇴 로그 기록 (✅ 안전한 로그 저장)
         saveLog(userNo, "USER_WITHDRAWN", "소셜 회원 탈퇴 완료", "127.0.0.1", "Unknown");
     }
 
-    // 로그 저장 메서드
+    // ✅ 안전한 로그 저장 메서드 (description 길이 제한)
     private void saveLog(Long userNo, String actionType, String description, String ipAddress, String userAgent) {
-        // 설명이 너무 길면 자르기
-        if (description != null && description.length() > 255) {
-            description = description.substring(0, 252) + "...";
+        try {
+            // description이 너무 길면 자르기
+            String safeDescription = description;
+            if (description != null && description.length() > MAX_DESCRIPTION_LENGTH) {
+                safeDescription = description.substring(0, MAX_DESCRIPTION_LENGTH - 3) + "...";
+                log.warn("로그 설명이 너무 길어서 잘림: 원본길이={}, 잘린길이={}", 
+                         description.length(), safeDescription.length());
+            }
+
+            // userNo로 User 객체 조회 (userNo가 null일 수 있으므로 조건부 처리)
+            User user = null;
+            if (userNo != null) {
+                user = userRepository.findById(userNo).orElse(null);
+                if (user == null) {
+                    log.warn("로그 저장 시 사용자를 찾을 수 없음: userNo={}", userNo);
+                }
+            }
+
+            Log logEntity = Log.builder()
+                    .user(user) // User 객체 전달
+                    .actionType(actionType)
+                    .description(safeDescription) // 길이가 제한된 description 사용
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent)
+                    .status("COMPLETED")
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            logRepository.save(logEntity);
+            log.debug("로그 저장 완료: actionType={}, userNo={}", actionType, userNo);
+
+        } catch (Exception e) {
+            // 로그 저장 실패는 메인 로직에 영향을 주면 안 되므로 에러만 기록
+            log.error("로그 저장 실패: actionType={}, userNo={}, error={}", actionType, userNo, e.getMessage());
         }
-
-        // userNo로 User 객체 조회 (userNo가 null일 수 있으므로 조건부 처리)
-        User user = null;
-        if (userNo != null) {
-            user = userRepository.findById(userNo).orElse(null);
-        }
-
-        Log log = Log.builder()
-                .user(user) // User 객체 전달
-                .actionType(actionType)
-                .description(description)
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
-                .status("COMPLETED")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        logRepository.save(log);
     }
 }

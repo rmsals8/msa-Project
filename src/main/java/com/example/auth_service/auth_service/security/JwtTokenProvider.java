@@ -192,12 +192,13 @@ public class JwtTokenProvider {
         }
     }
 
-    // ✅ 성능 최적화: UserDetails 로드 최적화
+    // ✅ JWT 토큰 검증용 UserDetails 로드 (비밀번호 검증 없음)
     private UserDetails loadUserDetailsOptimized(String email) {
         try {
-            return userDetailsService.loadUserByUsername(email);
+            // JWT 토큰이 이미 검증되었으므로 특별한 메서드 사용
+            return userDetailsService.loadUserForJwtToken(email);
         } catch (Exception e) {
-            log.error("UserDetails 로드 실패: {}", e.getMessage());
+            log.error("JWT용 UserDetails 로드 실패: {}", e.getMessage());
             throw e;
         }
     }
