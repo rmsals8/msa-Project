@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,7 @@ import com.example.auth_service.auth_service.domain.User;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -49,39 +51,6 @@ public class JwtTokenProvider {
         return new SecretKeySpec(keyBytes, SignatureAlgorithm.HS512.getJcaName());
     }
 
-    // public String createToken(Authentication authentication) {
-    // String authorities = authentication.getAuthorities().stream()
-    // .map(GrantedAuthority::getAuthority)
-    // .collect(Collectors.joining(","));
-
-    // long now = (new Date()).getTime();
-    // Date validity = new Date(now + this.getTokenValidityInMilliseconds());
-
-    // Key signingKey = getSigningKey();
-
-    // return Jwts.builder()
-    // .setSubject(authentication.getName())
-    // .claim("auth", authorities)
-    // .setExpiration(validity)
-    // .signWith(signingKey, SignatureAlgorithm.HS512)
-    // .compact();
-    // }
-
-    // public String createToken(String username) {
-    // Claims claims = Jwts.claims().setSubject(username);
-    // Date now = new Date();
-    // Date validity = new Date(now.getTime() +
-    // this.getTokenValidityInMilliseconds());
-
-    // Key signingKey = getSigningKey();
-
-    // return Jwts.builder()
-    // .setClaims(claims)
-    // .setIssuedAt(now)
-    // .setExpiration(validity)
-    // .signWith(signingKey, SignatureAlgorithm.HS512)
-    // .compact();
-    // }
     public String createToken(Authentication authentication) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -89,6 +58,8 @@ public class JwtTokenProvider {
 
         // UserPrincipal 대신 User로 처리하거나 조건부 처리
         Long userId = null;
+        Integer loginType = 0; // 기본값: 일반 로그인
+        
         if (authentication.getPrincipal() instanceof UserPrincipal) {
             userId = ((UserPrincipal) authentication.getPrincipal()).getId();
         } else {
@@ -97,6 +68,7 @@ public class JwtTokenProvider {
             User user = userDetailsService.getUserByEmail(email);
             if (user != null) {
                 userId = user.getUserNo();
+                loginType = user.getLoginType(); // 로그인 타입 추가
             }
         }
 
@@ -108,7 +80,8 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authorities)
-                .claim("userId", userId) // 사용자 ID 추가
+                .claim("userId", userId)
+                .claim("loginType", loginType) // 로그인 타입 추가
                 .setExpiration(validity)
                 .signWith(signingKey, SignatureAlgorithm.HS512)
                 .compact();
@@ -118,9 +91,10 @@ public class JwtTokenProvider {
         Claims claims = Jwts.claims().setSubject(username);
 
         // 사용자 ID를 DB에서 조회
-        User user = userDetailsService.getUserByEmail(username); // 이 메서드는 별도로 구현 필요
+        User user = userDetailsService.getUserByEmail(username);
         if (user != null) {
-            claims.put("userId", user.getUserNo()); // 사용자 ID 추가
+            claims.put("userId", user.getUserNo());
+            claims.put("loginType", user.getLoginType()); // 로그인 타입 추가
         }
 
         Date now = new Date();
@@ -136,28 +110,14 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // public String createRefreshToken(String username) {
-    // Claims claims = Jwts.claims().setSubject(username);
-    // Date now = new Date();
-    // Date validity = new Date(now.getTime() +
-    // this.getRefreshTokenValidityInMilliseconds());
-
-    // Key signingKey = getSigningKey();
-
-    // return Jwts.builder()
-    // .setClaims(claims)
-    // .setIssuedAt(now)
-    // .setExpiration(validity)
-    // .signWith(signingKey, SignatureAlgorithm.HS512)
-    // .compact();
-    // }
     public String createRefreshToken(String username) {
         Claims claims = Jwts.claims().setSubject(username);
 
         // 사용자 ID를 DB에서 조회
-        User user = userDetailsService.getUserByEmail(username); // 이 메서드는 별도로 구현 필요
+        User user = userDetailsService.getUserByEmail(username);
         if (user != null) {
-            claims.put("userId", user.getUserNo()); // 사용자 ID 추가
+            claims.put("userId", user.getUserNo());
+            claims.put("loginType", user.getLoginType()); // 로그인 타입 추가
         }
 
         Date now = new Date();
@@ -173,7 +133,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // parser도 deprecated 되었으므로 이것도 업데이트
+    // ✅ 핵심 수정: 소셜 로그인 사용자 구분 처리
     public Authentication getAuthentication(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
@@ -186,14 +146,36 @@ public class JwtTokenProvider {
             String email = claims.getSubject();
             log.info("Email from token: {}", email);
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            // 토큰에서 로그인 타입 확인
+            Integer loginType = claims.get("loginType", Integer.class);
+            log.info("Login type from token: {}", loginType);
 
-            log.info("UserDetails: {}", userDetails);
+            // 소셜 로그인 사용자(loginType=1)는 UserDetailsService 거치지 않음
+            if (loginType != null && loginType == 1) {
+                log.info("소셜 로그인 사용자 인증 처리: {}", email);
+                
+                // 소셜 로그인 사용자용 UserDetails 직접 생성
+                UserDetails socialUserDetails = new org.springframework.security.core.userdetails.User(
+                    email,
+                    "", // 비밀번호 없음
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                );
 
-            return new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    token,
-                    userDetails.getAuthorities());
+                return new UsernamePasswordAuthenticationToken(
+                        socialUserDetails,
+                        token,
+                        socialUserDetails.getAuthorities());
+            } else {
+                // 일반 로그인 사용자는 기존 방식대로 처리
+                log.info("일반 로그인 사용자 인증 처리: {}", email);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                log.info("UserDetails: {}", userDetails);
+
+                return new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        token,
+                        userDetails.getAuthorities());
+            }
         } catch (Exception e) {
             log.error("Authentication Error", e);
             throw new RuntimeException("Invalid token", e);
@@ -250,34 +232,17 @@ public class JwtTokenProvider {
         return refreshTokenValidityInSeconds * 1000;
     }
 
-    // public String createSocialLoginToken(String email) {
-    // Claims claims = Jwts.claims().setSubject(email);
-
-    // // 소셜 로그인 사용자를 위한 기본 권한 추가
-    // claims.put("auth", "ROLE_USER");
-
-    // Date now = new Date();
-    // Date validity = new Date(now.getTime() + getTokenValidityInMilliseconds());
-
-    // Key signingKey = getSigningKey();
-
-    // return Jwts.builder()
-    // .setClaims(claims)
-    // .setIssuedAt(now)
-    // .setExpiration(validity)
-    // .signWith(signingKey, SignatureAlgorithm.HS512)
-    // .compact();
-    // }
     public String createSocialLoginToken(String email) {
         Claims claims = Jwts.claims().setSubject(email);
 
         // 소셜 로그인 사용자를 위한 기본 권한 추가
         claims.put("auth", "ROLE_USER");
+        claims.put("loginType", 1); // 소셜 로그인 타입 명시
 
         // 사용자 ID를 DB에서 조회
-        User user = userDetailsService.getUserByEmail(email); // 이 메서드는 별도로 구현 필요
+        User user = userDetailsService.getUserByEmail(email);
         if (user != null) {
-            claims.put("userId", user.getUserNo()); // 사용자 ID 추가
+            claims.put("userId", user.getUserNo());
         }
 
         Date now = new Date();

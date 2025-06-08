@@ -39,13 +39,24 @@ public class CustomUserDetailsService implements UserDetailsService {
                         throw new UsernameNotFoundException("탈퇴한 회원입니다.");
                 }
 
-                // ✅ 비밀번호 존재 여부 확인
+                // ✅ 핵심 수정: 소셜 로그인 사용자는 비밀번호 체크 건너뛰기
+                if (user.getLoginType() != null && user.getLoginType() == 1) {
+                        log.debug("소셜 로그인 사용자 - 비밀번호 체크 건너뛰기: {}", email);
+                        
+                        // 소셜 로그인 사용자용 UserDetails 반환 (비밀번호 없음)
+                        return new org.springframework.security.core.userdetails.User(
+                                        user.getEmail(),
+                                        "", // 소셜 로그인 사용자는 비밀번호 없음
+                                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+                }
+
+                // ✅ 일반 로그인 사용자만 비밀번호 존재 여부 확인
                 if (!user.hasPassword()) {
-                        log.warn("사용자 {}의 비밀번호가 설정되지 않았습니다.", email);
+                        log.warn("일반 로그인 사용자 {}의 비밀번호가 설정되지 않았습니다.", email);
                         throw new UsernameNotFoundException("Password not found for user : " + email);
                 }
 
-                log.debug("로그인 성공: {}", email);
+                log.debug("일반 로그인 성공: {}", email);
 
                 return new org.springframework.security.core.userdetails.User(
                                 user.getEmail(),
