@@ -58,7 +58,7 @@ public class SecurityConfig {
     // ✅ 성능 최적화: BCrypt 강도 낮춤 (12→6)
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(6); // 기존 8에서 6으로 변경 (더 빠름)
+        return new BCryptPasswordEncoder(4); // 기존 8에서 6으로 변경 (더 빠름)
     }
 
     @Bean

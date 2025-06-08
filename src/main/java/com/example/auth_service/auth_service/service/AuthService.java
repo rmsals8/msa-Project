@@ -8,23 +8,17 @@ import com.example.auth_service.auth_service.dto.request.auth.TokenRefreshReques
 import com.example.auth_service.auth_service.dto.response.auth.AuthResponse;
 import com.example.auth_service.auth_service.dto.response.auth.UserProfile;
 import com.example.auth_service.auth_service.domain.Password;
-import com.example.auth_service.auth_service.domain.Log;
 import com.example.auth_service.auth_service.domain.RefreshToken;
 import com.example.auth_service.auth_service.exception.BadRequestException;
 import com.example.auth_service.auth_service.exception.ResourceNotFoundException;
 import com.example.auth_service.auth_service.repository.UserRepository;
 import com.example.auth_service.auth_service.repository.PasswordRepository;
 import com.example.auth_service.auth_service.repository.RefreshTokenRepository;
-import com.example.auth_service.auth_service.repository.LogRepository;
 import com.example.auth_service.auth_service.security.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,10 +30,8 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class AuthService {
-    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordRepository passwordRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -48,7 +40,7 @@ public class AuthService {
     private final RedisTemplate<String, String> redisTemplate;
     private final EmailVerificationService emailVerificationService;
 
-    // ✅ 간단한 회원가입 처리 (병렬 처리 없음)
+    // ✅ 회원가입 처리 (기존 유지)
     @Transactional
     public AuthResponse completeSignup(CompleteSignupRequest request) {
         long startTime = System.currentTimeMillis();
@@ -97,9 +89,9 @@ public class AuthService {
                     .build();
             passwordRepository.save(password);
 
-            // 6. 토큰 생성 (순차 처리)
-            String accessToken = tokenProvider.createToken(savedUser.getEmail());
-            String refreshToken = tokenProvider.createRefreshToken(savedUser.getEmail());
+            // 6. 토큰 생성 (성능 최적화된 버전 사용)
+            String accessToken = tokenProvider.createToken(savedUser.getEmail(), savedUser.getUserNo(), 0);
+            String refreshToken = tokenProvider.createRefreshToken(savedUser.getEmail(), savedUser.getUserNo(), 0);
 
             // 7. RefreshToken 저장
             saveRefreshToken(savedUser, refreshToken);
@@ -124,32 +116,48 @@ public class AuthService {
         }
     }
 
-    // ✅ 간단한 로그인 처리 (병렬 처리 없음)
+    // ✅ 로그인 성능 대폭 개선
+    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         long startTime = System.currentTimeMillis();
         log.info("로그인 시작: {}", request.getEmail());
 
         try {
-            // 1. 사용자 존재 여부 확인
-            if (!userRepository.existsByEmail(request.getEmail())) {
-                throw new BadRequestException("존재하지 않는 사용자입니다.");
+            // ✅ 1. 간단한 사용자 조회 (Password만 fetch)
+            User user = userRepository.findByEmailForLogin(request.getEmail())
+                    .orElseThrow(() -> new BadRequestException("존재하지 않는 사용자입니다."));
+
+            long userQueryTime = System.currentTimeMillis();
+            log.debug("사용자 조회 완료: {}ms", (userQueryTime - startTime));
+
+            // ✅ 2. 사용자 상태 체크 (빠른 실패)
+            if ("WITHDRAWN".equals(user.getStatus())) {
+                throw new BadRequestException("탈퇴한 회원입니다.");
             }
 
-            // 2. 인증 처리
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+            // ✅ 3. 소셜 로그인 사용자 체크
+            if (user.getLoginType() != null && user.getLoginType() == 1) {
+                throw new BadRequestException("소셜 로그인 사용자입니다. 소셜 로그인을 이용해주세요.");
+            }
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // ✅ 4. 비밀번호 체크
+            if (!user.hasPassword()) {
+                throw new BadRequestException("비밀번호가 설정되지 않은 사용자입니다.");
+            }
 
-            // 3. 사용자 조회
-            User user = userRepository.findByEmailWithDetails(request.getEmail())
-                    .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+            // ✅ 5. 비밀번호 검증 (가장 마지막에)
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new BadRequestException("비밀번호가 일치하지 않습니다.");
+            }
 
-            // 4. 토큰 생성 (순차 처리)
-            String accessToken = tokenProvider.createToken(authentication);
-            String refreshToken = tokenProvider.createRefreshToken(authentication.getName());
+            long authTime = System.currentTimeMillis();
+            log.debug("인증 완료: {}ms", (authTime - userQueryTime));
 
-            // 5. RefreshToken 저장
+            // ✅ 6. 토큰 생성 (DB 조회 없는 최적화된 버전)
+            String accessToken = tokenProvider.createToken(user.getEmail(), user.getUserNo(), user.getLoginType());
+            String refreshToken = tokenProvider.createRefreshToken(user.getEmail(), user.getUserNo(), user.getLoginType());
+
+            // ✅ 7. RefreshToken 저장
             saveRefreshToken(user, refreshToken);
 
             long endTime = System.currentTimeMillis();
@@ -172,7 +180,8 @@ public class AuthService {
         }
     }
 
-    // ✅ 토큰 갱신 처리
+    // ✅ 토큰 갱신 처리 (성능 최적화)
+    @Transactional(readOnly = true)
     public AuthResponse refresh(TokenRefreshRequest request) {
         try {
             // Redis에서 리프레시 토큰 검증
@@ -183,12 +192,15 @@ public class AuthService {
 
             // 토큰에서 사용자 정보 추출
             String username = tokenProvider.getUsername(request.getRefreshToken());
+            Long userId = tokenProvider.getUserId(request.getRefreshToken());
+
+            // ✅ DB 조회 최소화
             User user = userRepository.findByEmail(username)
                     .orElseThrow(() -> new ResourceNotFoundException("User", "email", username));
 
-            // 새 토큰 생성 (순차 처리)
-            String newAccessToken = tokenProvider.createToken(username);
-            String newRefreshToken = tokenProvider.createRefreshToken(username);
+            // ✅ 새 토큰 생성 (DB 조회 없는 버전 사용)
+            String newAccessToken = tokenProvider.createToken(username, userId, user.getLoginType());
+            String newRefreshToken = tokenProvider.createRefreshToken(username, userId, user.getLoginType());
 
             // Redis 업데이트
             redisTemplate.delete("RT:" + request.getRefreshToken());
