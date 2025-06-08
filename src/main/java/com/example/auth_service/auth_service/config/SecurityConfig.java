@@ -88,6 +88,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 인증 불필요 경로 (빠른 통과)
                         .requestMatchers(
+                            "/api/v1/subscriptions/status",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/complete-signup", 
                                 "/api/v1/auth/email-verify-request",
