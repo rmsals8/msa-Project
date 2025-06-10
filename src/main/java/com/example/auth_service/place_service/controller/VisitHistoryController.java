@@ -5,6 +5,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import com.example.auth_service.place_service.domain.VisitHistory;
 import com.example.auth_service.place_service.dto.VisitHistoryDto;
@@ -41,10 +44,13 @@ public class VisitHistoryController {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PostMapping("/add")
+    @CacheEvict(value = {"visitHistories", "categoryStats"}, key = "#authHeader", allEntries = true)
     public ResponseEntity<Map<String, Object>> addVisitHistory(
             @RequestBody VisitHistoryDto visitHistoryDto,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
+        long startTime = System.currentTimeMillis();
+        
         // ✅ 성능 최적화: 빠른 사용자 ID 추출
         String userId = extractUserIdFromTokenFast(authHeader);
         if (userId == null) {
@@ -52,12 +58,10 @@ public class VisitHistoryController {
         }
 
         try {
-            long startTime = System.currentTimeMillis();
-            
             VisitHistory addedHistory = visitHistoryService.addVisitHistory(visitHistoryDto, userId);
             
             long endTime = System.currentTimeMillis();
-            log.debug("✅ 방문 기록 추가 완료: {}ms", (endTime - startTime));
+            log.info("✅ 방문 기록 추가 완료: {}ms", (endTime - startTime));
 
             return createSuccessResponse("방문 기록이 성공적으로 추가되었습니다.", addedHistory);
         } catch (Exception e) {
@@ -66,8 +70,10 @@ public class VisitHistoryController {
         }
     }
 
-    // ✅ 성능 최적화: 기존 방문 기록 조회
+    // ✅ 성능 최적화: 캐시 적용된 기존 방문 기록 조회
     @GetMapping
+    @Cacheable(value = "visitHistories", key = "#authHeader + '_' + (#category ?: 'all')", 
+               unless = "#result.body.get('data') == null")
     public ResponseEntity<Map<String, Object>> getVisitHistories(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) String category) {
@@ -100,8 +106,11 @@ public class VisitHistoryController {
         }
     }
 
-    // ✅ 성능 최적화: 페이징 처리가 적용된 방문 기록 조회
+    // ✅ 성능 최적화: 페이징 처리가 적용된 방문 기록 조회 - 캐시 적용
     @GetMapping("/paged")
+    @Cacheable(value = "pagedVisitHistories", 
+               key = "#authHeader + '_' + (#category ?: 'all') + '_' + #page + '_' + #size",
+               unless = "#result.body.get('data') == null")
     public ResponseEntity<Map<String, Object>> getVisitHistoriesPaged(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) String category,
@@ -117,7 +126,7 @@ public class VisitHistoryController {
         }
 
         try {
-            // 방문 날짜 내림차순으로 정렬
+            // 방문 날짜 내림차순으로 정렬 - 인덱스 활용
             Pageable pageable = PageRequest.of(page, size, Sort.by("visitDate").descending());
             Page<VisitHistory> historiesPage;
 
@@ -151,6 +160,7 @@ public class VisitHistoryController {
     }
 
     @GetMapping("/stats")
+    @Cacheable(value = "categoryStats", key = "#authHeader", unless = "#result.body.get('data') == null")
     public ResponseEntity<Map<String, Object>> getCategoryStats(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
@@ -173,7 +183,7 @@ public class VisitHistoryController {
             }
 
             long endTime = System.currentTimeMillis();
-            log.debug("✅ 카테고리 통계 조회 완료: {}ms", (endTime - startTime));
+            log.info("✅ 카테고리 통계 조회 완료: {}ms", (endTime - startTime));
 
             return createSuccessResponse("카테고리 통계 조회에 성공했습니다.", result);
         } catch (Exception e) {
@@ -183,6 +193,8 @@ public class VisitHistoryController {
     }
 
     @DeleteMapping("/{id}")
+    @CacheEvict(value = {"visitHistories", "pagedVisitHistories", "categoryStats"}, 
+               key = "#authHeader", allEntries = true)
     public ResponseEntity<Map<String, Object>> deleteVisitHistory(
             @PathVariable Long id,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -206,6 +218,8 @@ public class VisitHistoryController {
     }
 
     @DeleteMapping
+    @CacheEvict(value = {"visitHistories", "pagedVisitHistories", "categoryStats"}, 
+               key = "#authHeader", allEntries = true)
     public ResponseEntity<Map<String, Object>> deleteAllVisitHistories(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
